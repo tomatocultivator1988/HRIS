@@ -235,22 +235,6 @@
                 }
 
                 console.log('Loading metrics with token:', token.substring(0, 20) + '...');
-                
-                // Test if Authorization header is being sent
-                const testUrl = window.AppConfig ? window.AppConfig.url('test_auth_header.php') : '/HRIS/test_auth_header.php';
-                console.log('Testing auth header with URL:', testUrl);
-                
-                const testResponse = await fetch(testUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                });
-                
-                const testData = await testResponse.json();
-                console.log('Auth header test response:', testData);
 
                 // Load metrics from API
                 const apiUrl = window.AppConfig ? window.AppConfig.apiUrl('dashboard/metrics') : '/HRIS/api/dashboard/metrics';

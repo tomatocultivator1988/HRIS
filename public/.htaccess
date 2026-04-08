@@ -1,36 +1,71 @@
-# Public Directory - MVC Entry Point
-
-# Disable directory browsing
-Options -Indexes
-
-# Set default file
-DirectoryIndex index.php
+# HRIS MVP - Production Apache Configuration
+# For use when DocumentRoot is set to public/ folder
 
 # Enable URL Rewriting
 RewriteEngine On
 
-# Pass Authorization header to PHP (required for JWT authentication)
-RewriteCond %{HTTP:Authorization} .
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+# Set base directory to root (production)
+RewriteBase /
 
-# Serve static assets directly (CSS, JS, images, fonts)
+# Serve static assets directly
 RewriteCond %{REQUEST_FILENAME} -f
-RewriteCond %{REQUEST_URI} \.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$ [NC]
-RewriteRule ^ - [L]
+RewriteRule ^assets/(.*)$ - [L]
 
 # Route all other requests to index.php (MVC Front Controller)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
-# Protect sensitive files
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data:; font-src 'self' https:; connect-src 'self'"
+    Header always unset Server
+    Header always unset X-Powered-By
+</IfModule>
+
+# Default entry point
+DirectoryIndex index.php
+
+# Prevent access to hidden files
 <FilesMatch "^\.">
     Require all denied
 </FilesMatch>
 
-# Prevent direct access to PHP files except index.php
-<FilesMatch "\.php$">
-    <If "%{REQUEST_URI} !~ m#/index\.php$#">
-        Require all denied
-    </If>
+# Prevent access to sensitive files
+<FilesMatch "\.(bak|backup|tmp|temp|log|md)$">
+    Require all denied
 </FilesMatch>
+
+# MIME Types
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+</IfModule>
+
+# Cache Control for Static Assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/javascript
+</IfModule>
+
+# Options
+Options -Indexes -MultiViews +FollowSymLinks
