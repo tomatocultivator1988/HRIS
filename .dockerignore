@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.example
+node_modules
+vendor
+*.md
+.vscode
+.kiro
+tests
+docs/examples
+public/logs/*.log

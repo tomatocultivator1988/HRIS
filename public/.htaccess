@@ -1,0 +1,36 @@
+# Public Directory - MVC Entry Point
+
+# Disable directory browsing
+Options -Indexes
+
+# Set default file
+DirectoryIndex index.php
+
+# Enable URL Rewriting
+RewriteEngine On
+
+# Pass Authorization header to PHP (required for JWT authentication)
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Serve static assets directly (CSS, JS, images, fonts)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$ [NC]
+RewriteRule ^ - [L]
+
+# Route all other requests to index.php (MVC Front Controller)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Prevent direct access to PHP files except index.php
+<FilesMatch "\.php$">
+    <If "%{REQUEST_URI} !~ m#/index\.php$#">
+        Require all denied
+    </If>
+</FilesMatch>

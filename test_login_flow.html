@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login Flow</title>
+</head>
+<body>
+    <h1>Test Login Flow</h1>
+    <button id="testBtn">Test Login</button>
+    <pre id="output"></pre>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg) {
+            output.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        document.getElementById('testBtn').addEventListener('click', async function() {
+            output.textContent = '';
+            log('=== Testing Login Flow ===\n');
+
+            // Simulate the backend response
+            const backendResponse = {
+                "success": true,
+                "message": "Login successful",
+                "data": {
+                    "success": true,
+                    "access_token": "test_token_123",
+                    "user": {
+                        "id": "535224c0-8e1a-4d57-b1df-806757811150",
+                        "email": "admin@company.com",
+                        "role": "admin",
+                        "name": "System Administrator"
+                    }
+                }
+            };
+
+            log('Backend Response:');
+            log(JSON.stringify(backendResponse, null, 2));
+            log('');
+
+            // Simulate normalizePayload
+            function normalizePayload(responseData) {
+                if (!responseData || typeof responseData !== 'object') {
+                    return {};
+                }
+
+                if (responseData.data && typeof responseData.data === 'object') {
+                    return responseData.data;
+                }
+
+                return responseData;
+            }
+
+            const payload = normalizePayload(backendResponse);
+            log('Normalized Payload:');
+            log(JSON.stringify(payload, null, 2));
+            log('');
+
+            // Extract token and user
+            const token = payload.access_token ?? null;
+            const user = payload.user ?? null;
+
+            log('Extracted Token: ' + (token ? 'YES' : 'NO'));
+            log('Extracted User: ' + (user ? 'YES' : 'NO'));
+            log('');
+
+            if (user) {
+                log('User Details:');
+                log('  Email: ' + user.email);
+                log('  Role: ' + user.role);
+                log('  Name: ' + user.name);
+                log('');
+
+                // Test getUserRole
+                function getUserRole(user) {
+                    if (!user) {
+                        return null;
+                    }
+                    return user.role ?? user.user_metadata?.role ?? null;
+                }
+
+                const role = getUserRole(user);
+                log('getUserRole() returned: ' + role);
+                log('');
+
+                // Test hasRole
+                function hasRole(user, roleToCheck) {
+                    const userRole = getUserRole(user);
+                    return userRole === roleToCheck;
+                }
+
+                log('hasRole(admin): ' + hasRole(user, 'admin'));
+                log('hasRole(employee): ' + hasRole(user, 'employee'));
+                log('');
+
+                // Test getRedirectUrl
+                function getRedirectUrl(user) {
+                    const basePath = '/HRIS';
+                    
+                    if (hasRole(user, 'admin')) {
+                        return basePath + '/dashboard/admin';
+                    } else if (hasRole(user, 'employee')) {
+                        return basePath + '/dashboard/employee';
+                    } else {
+                        return basePath + '/';
+                    }
+                }
+
+                const redirectUrl = getRedirectUrl(user);
+                log('Redirect URL: ' + redirectUrl);
+                log('');
+
+                if (redirectUrl === '/HRIS/dashboard/admin') {
+                    log('✅ CORRECT! Would redirect to admin dashboard');
+                } else {
+                    log('❌ WRONG! Expected /HRIS/dashboard/admin but got ' + redirectUrl);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

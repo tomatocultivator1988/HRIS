@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: hris-mvp
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+    healthCheckPath: /
