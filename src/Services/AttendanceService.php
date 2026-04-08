@@ -19,11 +19,13 @@ class AttendanceService
 {
     private Attendance $attendanceModel;
     private Employee $employeeModel;
+    private \DateTimeZone $appTimezone;
     
     public function __construct(Attendance $attendanceModel, Employee $employeeModel)
     {
         $this->attendanceModel = $attendanceModel;
         $this->employeeModel = $employeeModel;
+        $this->appTimezone = $this->resolveTimezone();
     }
     
     /**
@@ -43,13 +45,14 @@ class AttendanceService
             error_log('Time In parameter: ' . ($timeIn ?? 'NULL'));
             
             // Use current date and time if not provided
+            $now = new \DateTimeImmutable('now', $this->appTimezone);
             if ($date === null) {
-                $date = date('Y-m-d');
+                $date = $now->format('Y-m-d');
                 error_log('Using current date: ' . $date);
             }
             
             if ($timeIn === null) {
-                $timeIn = date('Y-m-d H:i:s');
+                $timeIn = $now->format('Y-m-d H:i:s');
                 error_log('Using current time: ' . $timeIn);
             }
             
@@ -155,13 +158,14 @@ class AttendanceService
             error_log('Time Out parameter: ' . ($timeOut ?? 'NULL'));
             
             // Use current date and time if not provided
+            $now = new \DateTimeImmutable('now', $this->appTimezone);
             if ($date === null) {
-                $date = date('Y-m-d');
+                $date = $now->format('Y-m-d');
                 error_log('Using current date: ' . $date);
             }
             
             if ($timeOut === null) {
-                $timeOut = date('Y-m-d H:i:s');
+                $timeOut = $now->format('Y-m-d H:i:s');
                 error_log('Using current time: ' . $timeOut);
             }
             
@@ -607,9 +611,28 @@ class AttendanceService
      */
     private function isWorkingDay(string $date): bool
     {
-        // Default: Monday-Friday are working days
-        $dayOfWeek = date('w', strtotime($date)); // 0 = Sunday, 6 = Saturday
+        $dateObj = \DateTimeImmutable::createFromFormat('Y-m-d|', $date, $this->appTimezone);
+        if (!$dateObj) {
+            return false;
+        }
+        $dayOfWeek = (int) $dateObj->format('w');
         return $dayOfWeek >= 1 && $dayOfWeek <= 5;
+    }
+
+    private function resolveTimezone(): \DateTimeZone
+    {
+        $timezoneName = 'Asia/Manila';
+        if (function_exists('config')) {
+            $configured = config('app.timezone', 'Asia/Manila');
+            if (is_string($configured) && $configured !== '') {
+                $timezoneName = $configured;
+            }
+        }
+        try {
+            return new \DateTimeZone($timezoneName);
+        } catch (\Exception $e) {
+            return new \DateTimeZone('Asia/Manila');
+        }
     }
     
     /**

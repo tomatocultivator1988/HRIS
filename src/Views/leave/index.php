@@ -25,14 +25,14 @@
         <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
         
         <!-- Request Leave Modal -->
-        <div id="request-leave-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div id="request-leave-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="request-modal-title" aria-hidden="true" tabindex="-1">
             <div class="bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
                     <div class="flex items-center">
                         <svg class="w-6 h-6 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <h3 class="text-xl font-bold text-white">Request Leave</h3>
+                        <h3 id="request-modal-title" class="text-xl font-bold text-white">Request Leave</h3>
                     </div>
                     <button onclick="closeRequestModal()" class="text-white hover:text-gray-200">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,11 +81,50 @@
             </div>
         </div>
 
+        <div id="submit-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[65] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="submit-confirm-title" aria-describedby="submit-confirm-description" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl max-w-xl w-full p-6">
+                <div class="mb-6">
+                    <h3 id="submit-confirm-title" class="text-xl font-semibold text-white mb-2">Confirm Leave Request</h3>
+                    <p id="submit-confirm-description" class="text-slate-300">Please review your request details before submitting.</p>
+                </div>
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Leave Type</span>
+                        <span id="submit-confirm-leave-type" class="text-white text-sm font-medium text-right"></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Start Date</span>
+                        <span id="submit-confirm-start-date" class="text-white text-sm font-medium text-right"></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">End Date</span>
+                        <span id="submit-confirm-end-date" class="text-white text-sm font-medium text-right"></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Total Working Days</span>
+                        <span id="submit-confirm-total-days" class="text-white text-sm font-semibold text-right"></span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 text-sm block mb-2">Reason</span>
+                        <p id="submit-confirm-reason" class="text-white text-sm bg-slate-700/50 rounded-lg p-3 break-words"></p>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="closeSubmitConfirmModal()" class="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all">
+                        Cancel
+                    </button>
+                    <button id="submit-confirm-action-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all">
+                        Confirm Submission
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Review Leave Modal (Admin) -->
-        <div id="review-leave-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div id="review-leave-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="review-modal-title" aria-hidden="true" tabindex="-1">
             <div class="bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4">
                 <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4 flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-white">Review Leave Request</h3>
+                    <h3 id="review-modal-title" class="text-xl font-bold text-white">Review Leave Request</h3>
                     <button onclick="closeReviewModal()" class="text-white hover:text-gray-200">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -110,7 +149,7 @@
         </div>
 
         <!-- Confirmation Modal -->
-        <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[60] flex items-center justify-center p-4">
+        <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" aria-hidden="true" tabindex="-1">
             <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl max-w-md w-full p-6">
                 <div class="text-center mb-6">
                     <div id="confirm-icon" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4">
@@ -131,10 +170,18 @@
         </div>
 
         <!-- Loading Modal -->
-        <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4">
+        <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="loading-message" aria-hidden="true" tabindex="-1">
             <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl p-8 text-center">
                 <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
                 <h3 id="loading-message" class="text-xl font-semibold text-white">Processing...</h3>
+                <p class="text-slate-400 mt-2">Please wait</p>
+            </div>
+        </div>
+
+        <div id="submit-loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[75] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="submit-loading-message" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl p-8 text-center">
+                <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
+                <h3 id="submit-loading-message" class="text-xl font-semibold text-white">Submitting your leave request...</h3>
                 <p class="text-slate-400 mt-2">Please wait</p>
             </div>
         </div>
@@ -382,6 +429,8 @@
     <script>
         let currentUser = null;
         let currentLeaveRequest = null;
+        let pendingRequestMap = {};
+        let submitConfirmCallback = null;
         let leaveTypesMap = {}; // Dynamic mapping of UUID to name
 
         document.addEventListener('DOMContentLoaded', async function() {
@@ -467,15 +516,52 @@
         }
 
         function openRequestModal() {
-            document.getElementById('request-leave-modal').classList.remove('hidden');
+            setModalVisibility('request-leave-modal', true);
             document.getElementById('start-date').min = new Date().toISOString().split('T')[0];
             document.getElementById('end-date').min = new Date().toISOString().split('T')[0];
         }
 
         function closeRequestModal() {
-            document.getElementById('request-leave-modal').classList.add('hidden');
+            setModalVisibility('request-leave-modal', false);
             document.getElementById('leave-request-form').reset();
             document.getElementById('calculated-days').classList.add('hidden');
+        }
+
+        function setModalVisibility(modalId, isVisible) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.classList.toggle('hidden', !isVisible);
+            modal.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+            syncModalInteractivityState();
+            if (isVisible) {
+                modal.focus();
+            }
+        }
+
+        function syncModalInteractivityState() {
+            const modalIds = [
+                'request-leave-modal',
+                'submit-confirm-modal',
+                'submit-loading-modal',
+                'review-leave-modal',
+                'confirm-modal',
+                'loading-modal'
+            ];
+            const hasOpenModal = modalIds.some(id => {
+                const modal = document.getElementById(id);
+                return modal && !modal.classList.contains('hidden');
+            });
+            const appShellElements = [document.querySelector('aside'), document.querySelector('main')];
+            appShellElements.forEach(element => {
+                if (!element) return;
+                if (hasOpenModal) {
+                    element.setAttribute('inert', '');
+                    element.setAttribute('aria-hidden', 'true');
+                } else {
+                    element.removeAttribute('inert');
+                    element.removeAttribute('aria-hidden');
+                }
+            });
         }
 
         document.getElementById('start-date')?.addEventListener('change', calculateDays);
@@ -522,34 +608,24 @@
                     showError('Please fill in all required fields');
                     return;
                 }
-                
-                // Close request modal first
-                closeRequestModal();
-                
-                // Show confirmation modal
                 const leaveTypeName = leaveTypesMap[leaveType] || 'Unknown';
                 const totalDays = document.getElementById('total-days').textContent;
-                const confirmed = await showConfirm(
-                    'Submit Leave Request',
-                    `Submit ${leaveTypeName} request for ${totalDays} day(s) from ${formatDate(startDate)} to ${formatDate(endDate)}?`,
-                    'warning'
-                );
-                
+                const requestDetails = {
+                    leaveType,
+                    startDate,
+                    endDate,
+                    reason,
+                    leaveTypeName,
+                    totalDays
+                };
+                const confirmed = await showSubmitConfirmModal(requestDetails);
                 if (!confirmed) {
-                    // Reopen request modal if cancelled
-                    openRequestModal();
-                    // Restore form values
-                    document.getElementById('leave-type').value = leaveType;
-                    document.getElementById('start-date').value = startDate;
-                    document.getElementById('end-date').value = endDate;
-                    document.getElementById('leave-reason').value = reason;
-                    calculateDays();
                     return;
                 }
-                
-                // Show loading modal
-                showLoadingModal('Submitting leave request...');
-                
+
+                closeRequestModal();
+                showSubmitLoadingModal();
+
                 const response = await fetch(AppConfig.getApiUrl('/leave/request'), {
                     method: 'POST',
                     headers: {
@@ -565,9 +641,6 @@
                 });
                 
                 const result = await response.json();
-                
-                hideLoadingModal();
-                
                 if (result.success) {
                     showSuccess('Leave request submitted successfully!');
                     loadLeaveHistory();
@@ -575,14 +648,82 @@
                         loadPendingRequests();
                     }
                 } else {
+                    openRequestModal();
+                    restoreLeaveRequestForm(requestDetails);
                     showError(result.message || 'Failed to submit leave request');
                 }
             } catch (error) {
-                hideLoadingModal();
+                openRequestModal();
                 console.error('Submit error:', error);
                 showError('Failed to submit leave request');
+            } finally {
+                hideSubmitLoadingModal();
             }
         }
+
+        function restoreLeaveRequestForm(requestDetails) {
+            document.getElementById('leave-type').value = requestDetails.leaveType;
+            document.getElementById('start-date').value = requestDetails.startDate;
+            document.getElementById('end-date').value = requestDetails.endDate;
+            document.getElementById('leave-reason').value = requestDetails.reason;
+            calculateDays();
+        }
+
+        function showSubmitConfirmModal(requestDetails) {
+            document.getElementById('submit-confirm-leave-type').textContent = requestDetails.leaveTypeName;
+            document.getElementById('submit-confirm-start-date').textContent = formatDate(requestDetails.startDate);
+            document.getElementById('submit-confirm-end-date').textContent = formatDate(requestDetails.endDate);
+            document.getElementById('submit-confirm-total-days').textContent = `${requestDetails.totalDays} day(s)`;
+            document.getElementById('submit-confirm-reason').textContent = requestDetails.reason;
+            setModalVisibility('submit-confirm-modal', true);
+            return new Promise((resolve) => {
+                submitConfirmCallback = resolve;
+            });
+        }
+
+        function closeSubmitConfirmModal() {
+            setModalVisibility('submit-confirm-modal', false);
+            if (submitConfirmCallback) {
+                submitConfirmCallback(false);
+                submitConfirmCallback = null;
+            }
+        }
+
+        document.getElementById('submit-confirm-action-btn')?.addEventListener('click', function() {
+            if (submitConfirmCallback) {
+                submitConfirmCallback(true);
+                submitConfirmCallback = null;
+            }
+            setModalVisibility('submit-confirm-modal', false);
+        });
+
+        function showSubmitLoadingModal() {
+            setModalVisibility('submit-loading-modal', true);
+        }
+
+        function hideSubmitLoadingModal() {
+            setModalVisibility('submit-loading-modal', false);
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key !== 'Escape') return;
+            if (!document.getElementById('submit-confirm-modal')?.classList.contains('hidden')) {
+                closeSubmitConfirmModal();
+                return;
+            }
+            if (!document.getElementById('confirm-modal')?.classList.contains('hidden')) {
+                closeConfirmModal();
+                return;
+            }
+            if (!document.getElementById('request-leave-modal')?.classList.contains('hidden')) {
+                closeRequestModal();
+                return;
+            }
+            if (!document.getElementById('review-leave-modal')?.classList.contains('hidden')) {
+                closeReviewModal();
+                return;
+            }
+        });
 
         async function loadLeaveTypes() {
             try {
@@ -663,6 +804,7 @@
 
         function displayPendingRequests(requests) {
             const tbody = document.getElementById('pending-requests-body');
+            pendingRequestMap = {};
             
             if (!requests || requests.length === 0) {
                 tbody.innerHTML = `
@@ -674,6 +816,9 @@
                 `;
                 return;
             }
+            requests.forEach(request => {
+                pendingRequestMap[request.id] = request;
+            });
             
             tbody.innerHTML = requests.map(request => `
                 <tr class="hover:bg-slate-700/30 transition-colors">
@@ -686,12 +831,21 @@
                     <td class="px-6 py-4 text-sm text-slate-300">${formatDate(request.end_date)}</td>
                     <td class="px-6 py-4 text-sm text-slate-300">${request.total_days} day(s)</td>
                     <td class="px-6 py-4">
-                        <button onclick='openReviewModal(${JSON.stringify(request)})' class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-all">
+                        <button onclick="openReviewModalById('${request.id}')" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-all">
                             Review
                         </button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        function openReviewModalById(requestId) {
+            const request = pendingRequestMap[requestId];
+            if (!request) {
+                showError('Leave request details not found. Please refresh and try again.');
+                return;
+            }
+            openReviewModal(request);
         }
 
         // Load approved requests (admin)
@@ -963,12 +1117,14 @@
                 </div>
             `;
             
-            document.getElementById('review-leave-modal').classList.remove('hidden');
+            setModalVisibility('review-leave-modal', true);
         }
 
-        function closeReviewModal() {
-            document.getElementById('review-leave-modal').classList.add('hidden');
-            currentLeaveRequest = null;
+        function closeReviewModal(clearRequest = true) {
+            setModalVisibility('review-leave-modal', false);
+            if (clearRequest) {
+                currentLeaveRequest = null;
+            }
         }
 
         let confirmCallback = null;
@@ -1006,7 +1162,7 @@
             
             document.getElementById('confirm-title').textContent = title;
             document.getElementById('confirm-message').textContent = message;
-            document.getElementById('confirm-modal').classList.remove('hidden');
+            setModalVisibility('confirm-modal', true);
             
             return new Promise((resolve) => {
                 confirmCallback = resolve;
@@ -1014,7 +1170,7 @@
         }
 
         function closeConfirmModal() {
-            document.getElementById('confirm-modal').classList.add('hidden');
+            setModalVisibility('confirm-modal', false);
             if (confirmCallback) {
                 confirmCallback(false);
                 confirmCallback = null;
@@ -1031,29 +1187,31 @@
 
         function showLoadingModal(message = 'Processing...') {
             document.getElementById('loading-message').textContent = message;
-            document.getElementById('loading-modal').classList.remove('hidden');
+            setModalVisibility('loading-modal', true);
         }
 
         function hideLoadingModal() {
-            document.getElementById('loading-modal').classList.add('hidden');
+            setModalVisibility('loading-modal', false);
         }
 
         async function approveLeaveRequest() {
-            if (!currentLeaveRequest) return;
+            if (!currentLeaveRequest) {
+                showError('Leave request details not found. Please reopen the request.');
+                return;
+            }
+            const selectedRequest = currentLeaveRequest;
             
-            // Close review modal first
-            closeReviewModal();
+            closeReviewModal(false);
             
             // Show confirmation modal
             const confirmed = await showConfirm(
                 'Approve Leave Request',
-                `Are you sure you want to approve this leave request for ${currentLeaveRequest.employee_name}?`,
+                `Are you sure you want to approve this leave request for ${selectedRequest.employee_name}?`,
                 'approve'
             );
             
             if (!confirmed) {
-                // Reopen review modal if cancelled
-                openReviewModal(currentLeaveRequest);
+                openReviewModal(selectedRequest);
                 return;
             }
             
@@ -1061,7 +1219,7 @@
             showLoadingModal('Approving leave request...');
             
             try {
-                const response = await fetch(AppConfig.getApiUrl(`/leave/${currentLeaveRequest.id}/approve`), {
+                const response = await fetch(AppConfig.getApiUrl(`/leave/${selectedRequest.id}/approve`), {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1075,6 +1233,7 @@
                 
                 if (result.success) {
                     showSuccess('Leave request approved successfully!');
+                    currentLeaveRequest = null;
                     loadPendingRequests();
                     loadApprovedRequests();
                 } else {
@@ -1088,7 +1247,11 @@
         }
 
         async function denyLeaveRequest() {
-            if (!currentLeaveRequest) return;
+            if (!currentLeaveRequest) {
+                showError('Leave request details not found. Please reopen the request.');
+                return;
+            }
+            const selectedRequest = currentLeaveRequest;
             
             // Show denial reason section if not visible
             const denialSection = document.getElementById('denial-reason-section');
@@ -1099,19 +1262,17 @@
             
             const denialReason = document.getElementById('denial-reason').value;
             
-            // Close review modal first
-            closeReviewModal();
+            closeReviewModal(false);
             
             // Show confirmation modal
             const confirmed = await showConfirm(
                 'Deny Leave Request',
-                `Are you sure you want to deny this leave request for ${currentLeaveRequest.employee_name}?`,
+                `Are you sure you want to deny this leave request for ${selectedRequest.employee_name}?`,
                 'deny'
             );
             
             if (!confirmed) {
-                // Reopen review modal if cancelled
-                openReviewModal(currentLeaveRequest);
+                openReviewModal(selectedRequest);
                 return;
             }
             
@@ -1119,7 +1280,7 @@
             showLoadingModal('Denying leave request...');
             
             try {
-                const response = await fetch(AppConfig.getApiUrl(`/leave/${currentLeaveRequest.id}/deny`), {
+                const response = await fetch(AppConfig.getApiUrl(`/leave/${selectedRequest.id}/deny`), {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1136,6 +1297,7 @@
                 
                 if (result.success) {
                     showSuccess('Leave request denied');
+                    currentLeaveRequest = null;
                     loadPendingRequests();
                     loadDeniedRequests();
                 } else {

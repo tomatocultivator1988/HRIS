@@ -19,11 +19,13 @@ class LeaveService
 {
     private LeaveRequest $leaveRequestModel;
     private Employee $employeeModel;
+    private \DateTimeZone $appTimezone;
     
     public function __construct(LeaveRequest $leaveRequestModel, Employee $employeeModel)
     {
         $this->leaveRequestModel = $leaveRequestModel;
         $this->employeeModel = $employeeModel;
+        $this->appTimezone = $this->resolveTimezone();
     }
     
     /**
@@ -206,10 +208,7 @@ class LeaveService
             
             error_log('Updated request: ' . json_encode($updatedRequest));
             
-            // TODO: Auto-create attendance records for approved leave dates
-            // Temporarily disabled due to database constraint issues
-            // Will be re-enabled after fixing the attendance status constraint
-            // $this->createLeaveAttendanceRecords($updatedRequest);
+            $this->createLeaveAttendanceRecords($updatedRequest);
             
             return $this->formatLeaveRequestData($updatedRequest);
             
@@ -238,8 +237,8 @@ class LeaveService
             $property->setAccessible(true);
             $db = $property->getValue($this->leaveRequestModel);
             
-            $startDate = new \DateTime($leaveRequest['start_date']);
-            $endDate = new \DateTime($leaveRequest['end_date']);
+            $startDate = new \DateTime($leaveRequest['start_date'], $this->appTimezone);
+            $endDate = new \DateTime($leaveRequest['end_date'], $this->appTimezone);
             $current = clone $startDate;
             
             $createdRecords = 0;
@@ -278,6 +277,22 @@ class LeaveService
                         
                         // SupabaseConnection::insert returns the record directly or empty array
                         if (!empty($insertResult)) {
+                            $createdRecords++;
+                        }
+                    } else {
+                        $hasTimeLogs = !empty($existingRecord['time_in']) || !empty($existingRecord['time_out']);
+                        $existingStatus = $existingRecord['status'] ?? '';
+
+                        if (!$hasTimeLogs && $existingStatus !== 'On Leave') {
+                            $db->update('attendance', [
+                                'status' => 'On Leave',
+                                'work_hours' => 0.00,
+                                'remarks' => 'On approved leave (Leave ID: ' . $leaveRequest['id'] . ')',
+                                'time_in' => null,
+                                'time_out' => null
+                            ], [
+                                'id' => $existingRecord['id']
+                            ]);
                             $createdRecords++;
                         }
                     }
@@ -673,8 +688,8 @@ class LeaveService
     private function calculateBusinessDays(string $startDate, string $endDate): float
     {
         try {
-            $start = new \DateTime($startDate);
-            $end = new \DateTime($endDate);
+            $start = new \DateTime($startDate, $this->appTimezone);
+            $end = new \DateTime($endDate, $this->appTimezone);
             
             // Ensure start date is not after end date
             if ($start > $end) {
@@ -712,9 +727,28 @@ class LeaveService
      */
     private function isWorkingDay(string $date): bool
     {
-        // Default: Monday-Friday are working days
-        $dayOfWeek = date('w', strtotime($date)); // 0 = Sunday, 6 = Saturday
+        $dateObj = \DateTimeImmutable::createFromFormat('Y-m-d|', $date, $this->appTimezone);
+        if (!$dateObj) {
+            return false;
+        }
+        $dayOfWeek = (int) $dateObj->format('w');
         return $dayOfWeek >= 1 && $dayOfWeek <= 5;
+    }
+
+    private function resolveTimezone(): \DateTimeZone
+    {
+        $timezoneName = 'Asia/Manila';
+        if (function_exists('config')) {
+            $configured = config('app.timezone', 'Asia/Manila');
+            if (is_string($configured) && $configured !== '') {
+                $timezoneName = $configured;
+            }
+        }
+        try {
+            return new \DateTimeZone($timezoneName);
+        } catch (\Exception $e) {
+            return new \DateTimeZone('Asia/Manila');
+        }
     }
     
     /**

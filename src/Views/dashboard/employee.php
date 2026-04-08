@@ -25,7 +25,7 @@
         <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
         
         <!-- Time In/Out Modal -->
-        <div id="attendance-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div id="attendance-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true" tabindex="-1">
             <div class="bg-slate-800 rounded-xl shadow-2xl max-w-md w-full mx-4">
                 <div id="modal-header" class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between">
                     <div class="flex items-center">
@@ -61,14 +61,14 @@
         </div>
         
         <!-- Request Leave Modal -->
-        <div id="request-leave-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div id="request-leave-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="request-modal-title" aria-hidden="true" tabindex="-1">
             <div class="bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
                     <div class="flex items-center">
                         <svg class="w-6 h-6 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <h3 class="text-xl font-bold text-white">Request Leave</h3>
+                        <h3 id="request-modal-title" class="text-xl font-bold text-white">Request Leave</h3>
                     </div>
                     <button onclick="closeRequestModal()" class="text-white hover:text-gray-200">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,6 +114,49 @@
                         Submit Request
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div id="submit-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="submit-confirm-title" aria-describedby="submit-confirm-description" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl max-w-xl w-full p-6">
+                <div class="mb-6">
+                    <h3 id="submit-confirm-title" class="text-xl font-semibold text-white mb-2">Confirm Leave Request</h3>
+                    <p id="submit-confirm-description" class="text-slate-300">Please review your request details before submitting.</p>
+                </div>
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Leave Type</span>
+                        <span id="submit-confirm-leave-type" class="text-white text-sm font-medium text-right"></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Start Date</span>
+                        <span id="submit-confirm-start-date" class="text-white text-sm font-medium text-right"></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">End Date</span>
+                        <span id="submit-confirm-end-date" class="text-white text-sm font-medium text-right"></span>
+                    </div>
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                        <span class="text-slate-400 text-sm">Total Working Days</span>
+                        <span id="submit-confirm-total-days" class="text-white text-sm font-semibold text-right"></span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 text-sm block mb-2">Reason</span>
+                        <p id="submit-confirm-reason" class="text-white text-sm bg-slate-700/50 rounded-lg p-3 break-words"></p>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="closeSubmitConfirmModal()" class="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all">Cancel</button>
+                    <button id="submit-confirm-action-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all">Confirm Submission</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="submit-loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="submit-loading-message" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl p-8 text-center">
+                <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
+                <h3 id="submit-loading-message" class="text-xl font-semibold text-white">Submitting your leave request...</h3>
+                <p class="text-slate-400 mt-2">Please wait</p>
             </div>
         </div>
         
@@ -389,7 +432,38 @@
         let currentDate = getPhilippinesDate();
         let attendanceAction = null;
         let leaveTypesMap = {}; // Store leave types for display
+        let submitConfirmCallback = null;
         const attendanceSyncKey = 'attendance:last-update';
+
+        function setModalVisibility(modalId, isVisible) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.classList.toggle('hidden', !isVisible);
+            modal.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+            syncModalInteractivityState();
+            if (isVisible) {
+                modal.focus();
+            }
+        }
+
+        function syncModalInteractivityState() {
+            const modalIds = ['attendance-modal', 'request-leave-modal', 'submit-confirm-modal', 'submit-loading-modal'];
+            const hasOpenModal = modalIds.some(id => {
+                const modal = document.getElementById(id);
+                return modal && !modal.classList.contains('hidden');
+            });
+            const appShellElements = [document.querySelector('aside'), document.querySelector('main')];
+            appShellElements.forEach(element => {
+                if (!element) return;
+                if (hasOpenModal) {
+                    element.setAttribute('inert', '');
+                    element.setAttribute('aria-hidden', 'true');
+                } else {
+                    element.removeAttribute('inert');
+                    element.removeAttribute('aria-hidden');
+                }
+            });
+        }
 
         function getPhilippinesDate() {
             return getPhilippinesDateFromDate(new Date());
@@ -919,12 +993,12 @@
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-message').textContent = message;
             document.getElementById('modal-header').className = `bg-gradient-to-r ${headerColor} px-6 py-4 flex items-center justify-between`;
-            document.getElementById('attendance-modal').classList.remove('hidden');
+            setModalVisibility('attendance-modal', true);
         }
         
         // Close attendance modal
         function closeAttendanceModal() {
-            document.getElementById('attendance-modal').classList.add('hidden');
+            setModalVisibility('attendance-modal', false);
             attendanceAction = null;
         }
         
@@ -983,7 +1057,7 @@
         
         // Leave request modal functions
         function openRequestModal() {
-            document.getElementById('request-leave-modal').classList.remove('hidden');
+            setModalVisibility('request-leave-modal', true);
             document.getElementById('start-date').min = new Date().toISOString().split('T')[0];
             document.getElementById('end-date').min = new Date().toISOString().split('T')[0];
         }
@@ -1020,7 +1094,7 @@
         }
         
         function closeRequestModal() {
-            document.getElementById('request-leave-modal').classList.add('hidden');
+            setModalVisibility('request-leave-modal', false);
             document.getElementById('leave-request-form').reset();
             document.getElementById('calculated-days').classList.add('hidden');
         }
@@ -1061,11 +1135,6 @@
         
         // Submit leave request
         async function submitLeaveRequest() {
-            // Show confirmation before submitting
-            if (!confirm('Are you sure you want to submit this leave request?')) {
-                return;
-            }
-            
             try {
                 const leaveType = document.getElementById('leave-type').value;
                 const startDate = document.getElementById('start-date').value;
@@ -1076,6 +1145,22 @@
                     showError('Please fill in all required fields');
                     return;
                 }
+
+                const requestDetails = {
+                    leaveType,
+                    startDate,
+                    endDate,
+                    reason,
+                    leaveTypeName: leaveTypesMap[leaveType] || 'Unknown',
+                    totalDays: document.getElementById('total-days').textContent || '0'
+                };
+
+                const confirmed = await showSubmitConfirmModal(requestDetails);
+                if (!confirmed) {
+                    return;
+                }
+
+                showSubmitLoadingModal();
                 
                 const response = await fetch(AppConfig.getApiUrl('/leave/request'), {
                     method: 'POST',
@@ -1104,8 +1189,61 @@
             } catch (error) {
                 console.error('Submit error:', error);
                 showError('Failed to submit leave request');
+            } finally {
+                hideSubmitLoadingModal();
             }
         }
+
+        function showSubmitConfirmModal(requestDetails) {
+            document.getElementById('submit-confirm-leave-type').textContent = requestDetails.leaveTypeName;
+            document.getElementById('submit-confirm-start-date').textContent = formatDate(requestDetails.startDate);
+            document.getElementById('submit-confirm-end-date').textContent = formatDate(requestDetails.endDate);
+            document.getElementById('submit-confirm-total-days').textContent = `${requestDetails.totalDays} day(s)`;
+            document.getElementById('submit-confirm-reason').textContent = requestDetails.reason;
+            setModalVisibility('submit-confirm-modal', true);
+            return new Promise((resolve) => {
+                submitConfirmCallback = resolve;
+            });
+        }
+
+        function closeSubmitConfirmModal() {
+            setModalVisibility('submit-confirm-modal', false);
+            if (submitConfirmCallback) {
+                submitConfirmCallback(false);
+                submitConfirmCallback = null;
+            }
+        }
+
+        document.getElementById('submit-confirm-action-btn')?.addEventListener('click', function() {
+            if (submitConfirmCallback) {
+                submitConfirmCallback(true);
+                submitConfirmCallback = null;
+            }
+            setModalVisibility('submit-confirm-modal', false);
+        });
+
+        function showSubmitLoadingModal() {
+            setModalVisibility('submit-loading-modal', true);
+        }
+
+        function hideSubmitLoadingModal() {
+            setModalVisibility('submit-loading-modal', false);
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key !== 'Escape') return;
+            if (!document.getElementById('submit-confirm-modal')?.classList.contains('hidden')) {
+                closeSubmitConfirmModal();
+                return;
+            }
+            if (!document.getElementById('request-leave-modal')?.classList.contains('hidden')) {
+                closeRequestModal();
+                return;
+            }
+            if (!document.getElementById('attendance-modal')?.classList.contains('hidden')) {
+                closeAttendanceModal();
+            }
+        });
         
         // Utility functions
         function formatDate(dateStr) {
