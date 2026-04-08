@@ -810,23 +810,64 @@ class EmployeeService
     private function formatEmployeeData(array $employee): array
     {
         return [
-            'id' => $employee['id'],
-            'employee_id' => $employee['employee_id'],
-            'first_name' => $employee['first_name'],
-            'last_name' => $employee['last_name'],
-            'full_name' => $employee['first_name'] . ' ' . $employee['last_name'],
-            'work_email' => $employee['work_email'],
-            'mobile_number' => $employee['mobile_number'],
-            'department' => $employee['department'],
-            'position' => $employee['position'],
-            'employment_status' => $employee['employment_status'],
-            'date_hired' => $employee['date_hired'],
+            'id' => $employee['id'] ?? null,
+            'employee_id' => $this->normalizeNullableValue($employee['employee_id'] ?? null),
+            'first_name' => $this->normalizeNullableValue($employee['first_name'] ?? null),
+            'last_name' => $this->normalizeNullableValue($employee['last_name'] ?? null),
+            'full_name' => trim(($employee['first_name'] ?? '') . ' ' . ($employee['last_name'] ?? '')),
+            'work_email' => $this->normalizeNullableValue($employee['work_email'] ?? null),
+            'mobile_number' => $this->normalizeNullableValue($employee['mobile_number'] ?? null),
+            'department' => $this->normalizeNullableValue($employee['department'] ?? null),
+            'position' => $this->normalizeNullableValue($employee['position'] ?? null),
+            'employment_status' => $this->normalizeNullableValue($employee['employment_status'] ?? null),
+            'date_hired' => $this->normalizeDateValue($employee['date_hired'] ?? null),
             'manager_id' => $employee['manager_id'] ?? null,
-            'is_active' => $employee['is_active'],
-            'status_label' => $employee['is_active'] ? 'Active' : 'Inactive',
-            'created_at' => $employee['created_at'],
-            'updated_at' => $employee['updated_at']
+            'is_active' => (bool) ($employee['is_active'] ?? false),
+            'status_label' => !empty($employee['is_active']) ? 'Active' : 'Inactive',
+            'created_at' => $this->normalizeDateValue($employee['created_at'] ?? null, true),
+            'updated_at' => $this->normalizeDateValue($employee['updated_at'] ?? null, true)
         ];
+    }
+
+    private function normalizeNullableValue($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        return $value === '' ? null : $value;
+    }
+
+    private function normalizeDateValue($value, bool $includeTime = false): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format($includeTime ? 'Y-m-d H:i:s' : 'Y-m-d');
+        }
+
+        if (is_array($value) && !empty($value['date'])) {
+            $value = $value['date'];
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed === '') {
+                return null;
+            }
+
+            $timestamp = strtotime($trimmed);
+            if ($timestamp === false) {
+                return null;
+            }
+
+            return date($includeTime ? 'Y-m-d H:i:s' : 'Y-m-d', $timestamp);
+        }
+
+        return null;
     }
     
     /**

@@ -213,28 +213,28 @@
                         </div>
                         <div class="p-6 space-y-4">
                             <div class="grid grid-cols-2 gap-4">
-                                <div>
+                                <div class="profile-field">
                                     <label class="block text-sm font-medium text-slate-400 mb-1">First Name</label>
                                     <p class="text-white" id="display-first-name">--</p>
                                 </div>
-                                <div>
+                                <div class="profile-field">
                                     <label class="block text-sm font-medium text-slate-400 mb-1">Last Name</label>
                                     <p class="text-white" id="display-last-name">--</p>
                                 </div>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Email Address</label>
                                 <p class="text-white" id="display-email">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Phone Number</label>
                                 <p class="text-white" id="display-phone">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Address</label>
                                 <p class="text-white" id="display-address">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Emergency Contact</label>
                                 <p class="text-white" id="display-emergency-contact">--</p>
                             </div>
@@ -248,27 +248,27 @@
                             <p class="text-slate-400 text-sm mt-1">Your job and company details</p>
                         </div>
                         <div class="p-6 space-y-4">
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Employee ID</label>
                                 <p class="text-white" id="display-employee-id">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Department</label>
                                 <p class="text-white" id="display-department">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Position</label>
                                 <p class="text-white" id="display-position">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Employment Status</label>
                                 <p class="text-white" id="display-employment-status">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Date Hired</label>
                                 <p class="text-white" id="display-date-hired">--</p>
                             </div>
-                            <div>
+                            <div class="profile-field">
                                 <label class="block text-sm font-medium text-slate-400 mb-1">Manager</label>
                                 <p class="text-white" id="display-manager">--</p>
                             </div>
@@ -295,7 +295,7 @@
                         </div>
                     </div>
                     
-                    <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl p-6">
+                    <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl p-6" id="years-service-card">
                         <div class="flex items-center">
                             <div class="flex-shrink-0 bg-green-500 rounded-lg p-3">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,6 +339,7 @@
     <script src="<?= base_url('/assets/js/token-manager.js') ?>"></script>
     <script src="<?= base_url('/assets/js/loading-skeletons.js') ?>"></script>
     <script src="<?= base_url('/assets/js/utils.js') ?>"></script>
+    <script src="<?= base_url('/assets/js/profile-utils.js') ?>"></script>
     <script>
         let currentUser = null;
         let employeeData = null;
@@ -436,31 +437,27 @@
         
         // Display employee profile data
         function displayEmployeeProfile(employee) {
-            // Profile header
             const initials = (employee.first_name?.charAt(0) || '') + (employee.last_name?.charAt(0) || '');
             document.getElementById('profile-initials').textContent = initials.toUpperCase();
             document.getElementById('profile-name').textContent = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
-            document.getElementById('profile-position').textContent = `${employee.position || 'N/A'} • ${employee.department || 'N/A'}`;
-            document.getElementById('profile-email').textContent = employee.work_email || employee.email || 'N/A';
-            document.getElementById('profile-employee-id').textContent = `Employee ID: ${employee.employee_id || 'N/A'}`;
-            
-            // Personal information
-            document.getElementById('display-first-name').textContent = employee.first_name || 'N/A';
-            document.getElementById('display-last-name').textContent = employee.last_name || 'N/A';
-            document.getElementById('display-email').textContent = employee.work_email || employee.email || 'N/A';
-            document.getElementById('display-phone').textContent = employee.mobile_number || employee.phone || 'N/A';
-            document.getElementById('display-address').textContent = employee.address || 'N/A';
-            document.getElementById('display-emergency-contact').textContent = employee.emergency_contact || 'N/A';
-            
-            // Employment information
-            document.getElementById('display-employee-id').textContent = employee.employee_id || 'N/A';
-            document.getElementById('display-department').textContent = employee.department || 'N/A';
-            document.getElementById('display-position').textContent = employee.position || 'N/A';
-            document.getElementById('display-employment-status').textContent = employee.employment_status || 'N/A';
-            document.getElementById('display-date-hired').textContent = employee.date_hired ? formatDate(employee.date_hired) : 'N/A';
-            document.getElementById('display-manager').textContent = employee.manager_name || 'N/A';
-            
-            // Populate edit form
+            const headerPositionParts = [employee.position, employee.department].filter(value => ProfileUtils.hasDisplayValue(value));
+            document.getElementById('profile-position').textContent = headerPositionParts.length > 0 ? headerPositionParts.join(' • ') : '';
+            document.getElementById('profile-email').textContent = ProfileUtils.getFirstDisplayValue(employee.work_email, employee.email) || '';
+            document.getElementById('profile-employee-id').textContent = ProfileUtils.hasDisplayValue(employee.employee_id) ? `Employee ID: ${employee.employee_id}` : '';
+
+            setProfileFieldValue('display-first-name', employee.first_name);
+            setProfileFieldValue('display-last-name', employee.last_name);
+            setProfileFieldValue('display-email', ProfileUtils.getFirstDisplayValue(employee.work_email, employee.email));
+            setProfileFieldValue('display-phone', ProfileUtils.getFirstDisplayValue(employee.mobile_number, employee.phone));
+            setProfileFieldValue('display-address', employee.address);
+            setProfileFieldValue('display-emergency-contact', employee.emergency_contact);
+            setProfileFieldValue('display-employee-id', employee.employee_id);
+            setProfileFieldValue('display-department', employee.department);
+            setProfileFieldValue('display-position', employee.position);
+            setProfileFieldValue('display-employment-status', employee.employment_status);
+            setProfileFieldValue('display-date-hired', employee.date_hired, ProfileUtils.formatEmployeeDate(employee.date_hired, navigator.language));
+            setProfileFieldValue('display-manager', employee.manager_name);
+
             document.getElementById('edit-first-name').value = employee.first_name || '';
             document.getElementById('edit-last-name').value = employee.last_name || '';
             document.getElementById('edit-email').value = employee.work_email || employee.email || '';
@@ -509,14 +506,14 @@
                     document.getElementById('stats-attendance-rate').textContent = '0';
                 }
                 
-                // Calculate years of service
-                if (employeeData && employeeData.date_hired) {
-                    const hiredDate = new Date(employeeData.date_hired);
-                    const now = new Date();
-                    const years = Math.floor((now - hiredDate) / (365.25 * 24 * 60 * 60 * 1000));
-                    document.getElementById('stats-years-service').textContent = Math.max(0, years);
+                const years = ProfileUtils.calculateServiceYears(employeeData?.date_hired);
+                const yearsCard = document.getElementById('years-service-card');
+                if (years === null) {
+                    document.getElementById('stats-years-service').textContent = '--';
+                    yearsCard.classList.add('hidden');
                 } else {
-                    document.getElementById('stats-years-service').textContent = '0';
+                    document.getElementById('stats-years-service').textContent = years;
+                    yearsCard.classList.remove('hidden');
                 }
                 
             } catch (error) {
@@ -571,15 +568,28 @@
             }
         }
         
-        // Utility functions
-        function formatDate(dateStr) {
-            if (!dateStr) return 'N/A';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
+        function setProfileFieldValue(elementId, value, formattedValue = null) {
+            const fieldElement = document.getElementById(elementId);
+            if (!fieldElement) {
+                return;
+            }
+
+            const fieldContainer = fieldElement.closest('.profile-field');
+            const hasValue = ProfileUtils.hasDisplayValue(value) || ProfileUtils.hasDisplayValue(formattedValue);
+
+            if (!hasValue) {
+                fieldElement.textContent = '';
+                if (fieldContainer) {
+                    fieldContainer.classList.add('hidden');
+                }
+                return;
+            }
+
+            if (fieldContainer) {
+                fieldContainer.classList.remove('hidden');
+            }
+
+            fieldElement.textContent = ProfileUtils.hasDisplayValue(formattedValue) ? formattedValue : String(value).trim();
         }
         
         function hideLoading() {
