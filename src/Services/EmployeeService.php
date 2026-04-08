@@ -617,13 +617,12 @@ class EmployeeService
                 }
             } else {
                 // Employee getting their own profile
-                $employees = $this->employeeModel->where(['supabase_user_id' => $user['id']])->get();
+                // Auth payload uses database employee ID in $user['id']
+                $employee = $this->employeeModel->find($user['id']);
                 
-                if (empty($employees)) {
+                if (!$employee) {
                     throw new NotFoundException('Employee profile not found');
                 }
-                
-                $employee = $employees[0];
             }
             
             // Get manager information if available
@@ -669,13 +668,13 @@ class EmployeeService
                 }
             } else {
                 // Employee updating their own profile
-                $employees = $this->employeeModel->where(['supabase_user_id' => $user['id']])->get();
+                // Auth payload uses database employee ID in $user['id']
+                $existingEmployee = $this->employeeModel->find($user['id']);
                 
-                if (empty($employees)) {
+                if (!$existingEmployee) {
                     throw new NotFoundException('Employee profile not found');
                 }
                 
-                $existingEmployee = $employees[0];
                 $employeeId = $existingEmployee['id'];
             }
             

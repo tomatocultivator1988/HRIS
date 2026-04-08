@@ -3,45 +3,40 @@
  * Provides centralized configuration for paths and URLs
  */
 
-// Detect base path automatically
+// Detect environment and set base path
 const detectBasePath = () => {
+    // Production: Render.com or custom domain
+    if (window.location.hostname.includes('onrender.com') || 
+        window.location.hostname.includes('render.app') ||
+        !window.location.hostname.includes('localhost')) {
+        return ''; // Root path for production
+    }
+    
+    // Development: localhost with HRIS folder
     const path = window.location.pathname;
-    
-    // Split and filter empty parts
     const parts = path.split('/').filter(p => p);
-    
-    // Look for HRIS folder (case-insensitive)
     const hrisIndex = parts.findIndex(p => p.toUpperCase() === 'HRIS');
     
     if (hrisIndex >= 0) {
-        // Found HRIS, return path up to and including HRIS
         return '/' + parts.slice(0, hrisIndex + 1).join('/');
     }
     
-    // If not found, check if we're already inside HRIS by looking at the URL
-    // This handles cases where the path is like /dashboard/admin
-    const fullPath = window.location.href;
-    const hrisMatch = fullPath.match(/\/HRIS\//i);
-    
-    if (hrisMatch) {
+    // Check if we're inside HRIS folder
+    if (window.location.href.match(/\/HRIS\//i)) {
         return '/HRIS';
     }
     
-    // Last resort: check if current directory contains typical HRIS folders
-    // by trying to detect from the current path structure
-    if (parts.includes('dashboard') || parts.includes('modules') || parts.includes('api')) {
-        // We're likely inside HRIS, assume HRIS is the parent
+    // Default for localhost
+    if (window.location.hostname === 'localhost') {
         return '/HRIS';
     }
     
-    // Absolute fallback: empty string (root)
-    console.warn('Could not detect HRIS base path, using root');
     return '';
 };
 
 // Global configuration object
 window.AppConfig = {
-    // Base path (e.g., '/HRIS' or '')
+    // Base path (e.g., '/HRIS' for localhost, '' for production)
     basePath: detectBasePath(),
     
     // Full base URL

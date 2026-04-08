@@ -7,6 +7,10 @@ RewriteEngine On
 # Set base directory for XAMPP
 RewriteBase /HRIS/
 
+# Force route API requests to public/index.php
+RewriteCond %{REQUEST_URI} ^/HRIS/api/
+RewriteRule ^(.*)$ public/index.php [QSA,L]
+
 # Serve static assets directly from public directory
 # Match: /HRIS/assets/... → public/assets/...
 RewriteCond %{REQUEST_URI} ^/HRIS/assets/

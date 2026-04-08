@@ -41,8 +41,34 @@ try {
     $routeLoader = require APP_ROOT . '/config/routes.php';
     $routeLoader($router);
     
+    // Debug: Check if profile route exists
+    if ($request->getUri() === '/api/employees/profile') {
+        error_log("MVC Debug - Looking for profile route...");
+        $allRoutes = $router->getRoutes();
+        error_log("MVC Debug - Total routes: " . count($allRoutes));
+        
+        $foundRoutes = [];
+        foreach ($allRoutes as $route) {
+            if ($route['method'] === 'GET' && strpos($route['pattern'], 'profile') !== false) {
+                $foundRoutes[] = $route['pattern'];
+                error_log("MVC Debug - Found GET profile route: " . $route['pattern']);
+            }
+        }
+        
+        if (empty($foundRoutes)) {
+            error_log("MVC Debug - NO PROFILE ROUTES FOUND!");
+        }
+    }
+    
     // Match request to route
     $route = $router->match($request->getMethod(), $request->getUri());
+    
+    // Debug: If no match for profile, show why
+    if ($route === null && $request->getUri() === '/api/employees/profile') {
+        error_log("MVC Debug - ROUTE MATCH FAILED for /api/employees/profile");
+        error_log("MVC Debug - Request Method: " . $request->getMethod());
+        error_log("MVC Debug - Request URI: " . $request->getUri());
+    }
     
     if ($route === null) {
         // Handle 404 - Route not found

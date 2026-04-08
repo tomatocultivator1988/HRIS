@@ -22,7 +22,10 @@ return function (Router $router) {
     $router->addRoute('GET', '/api/employees/list.php', 'EmployeeController@apiIndex', ['logging', 'auth']);
     $router->addRoute('GET', '/api/employees/search.php', 'EmployeeController@apiSearch', ['logging', 'auth']);
     $router->addRoute('POST', '/api/employees/create.php', 'EmployeeController@apiCreate', ['logging', 'auth', 'role:admin']);
-    $router->addRoute('GET', '/api/employees/profile.php', 'EmployeeController@apiShow', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/employees/profile.php', 'EmployeeController@profile', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/employees/profile', 'EmployeeController@profile', ['logging', 'auth']); // Without .php extension
+    $router->addRoute('PUT', '/api/employees/profile.php', 'EmployeeController@updateProfile', ['logging', 'auth']);
+    $router->addRoute('PUT', '/api/employees/profile', 'EmployeeController@updateProfile', ['logging', 'auth']);
     $router->addRoute('POST', '/api/employees/update.php', 'EmployeeController@apiUpdate', ['logging', 'auth', 'role:admin']);
     $router->addRoute('POST', '/api/employees/delete.php', 'EmployeeController@apiDelete', ['logging', 'auth', 'role:admin']);
     
@@ -102,6 +105,8 @@ return function (Router $router) {
     
     // Employee API routes
     $router->addRoute('GET', '/api/employees/search', 'EmployeeController@apiSearch', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/employees/profile', 'EmployeeController@profile', ['logging', 'auth']); // Must be before {id} route
+    $router->addRoute('PUT', '/api/employees/profile', 'EmployeeController@updateProfile', ['logging', 'auth']);
     $router->addRoute('GET', '/api/employees', 'EmployeeController@apiIndex', ['logging', 'auth']);
     $router->addRoute('POST', '/api/employees', 'EmployeeController@apiCreate', ['logging', 'auth', 'role:admin']);
     $router->addRoute('GET', '/api/employees/{id}', 'EmployeeController@apiShow', ['logging', 'auth']);

@@ -559,7 +559,7 @@ class EmployeeController extends Controller
                 $canEdit = true;
             } else {
                 // Check if this is the user's own profile
-                $userEmployee = $this->employeeService->getEmployeeBySupabaseUserId($user['id']);
+                $userEmployee = $this->employeeService->getEmployeeById($user['id']);
                 if ($userEmployee && $userEmployee['id'] === $employeeId) {
                     $isOwnProfile = true;
                     $canEdit = true; // Limited editing for own profile
