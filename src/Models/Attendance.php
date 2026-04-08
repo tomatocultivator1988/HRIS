@@ -61,6 +61,28 @@ class Attendance extends Model
             return null;
         }
     }
+
+    public function findLatestOpenRecord(string $employeeId): ?array
+    {
+        try {
+            $records = $this->where([
+                'employee_id' => $employeeId
+            ])->orderBy('date', 'DESC')->limit(50)->get();
+
+            foreach ($records as $record) {
+                if (!empty($record['time_in']) && empty($record['time_out'])) {
+                    return $record;
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            $this->handleDatabaseError($e, 'findLatestOpenRecord', [
+                'employee_id' => $employeeId
+            ]);
+            return null;
+        }
+    }
     
     /**
      * Get attendance records for a date range

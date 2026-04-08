@@ -320,6 +320,7 @@
     <script src="<?= base_url('/assets/js/utils.js') ?>"></script>
     <script>
         let currentUser = null;
+        const attendanceSyncKey = 'attendance:last-update';
         
         // Get current date in Philippines timezone (Asia/Manila)
         function getPhilippinesDate() {
@@ -413,6 +414,18 @@
                     document.getElementById('quick-actions-card').classList.remove('hidden');
                     loadMyAttendance();
                 }
+
+                window.addEventListener('storage', function(event) {
+                    if (event.key === attendanceSyncKey && document.visibilityState === 'visible' && currentUser?.role !== 'admin') {
+                        loadMyAttendance();
+                    }
+                });
+
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible' && currentUser?.role !== 'admin') {
+                        loadMyAttendance();
+                    }
+                });
                 
                 // Hide loading screen
                 hideLoading();
@@ -480,6 +493,7 @@
                 
                 if (result.success) {
                     showSuccess('Time-in recorded successfully!');
+                    localStorage.setItem(attendanceSyncKey, String(Date.now()));
                     loadMyAttendance();
                 } else {
                     showError(result.message || 'Failed to record time-in');
@@ -517,6 +531,7 @@
                 
                 if (result.success) {
                     showSuccess('Time-out recorded successfully!');
+                    localStorage.setItem(attendanceSyncKey, String(Date.now()));
                     loadMyAttendance();
                 } else {
                     showError(result.message || 'Failed to record time-out');
@@ -534,11 +549,11 @@
         // Load my attendance (employee)
         async function loadMyAttendance() {
             try {
-                const startDate = new Date();
-                startDate.setDate(startDate.getDate() - 30);
-                const endDate = new Date();
+                currentDate = getPhilippinesDate();
+                const startDate = getPhilippinesDateWithOffset(-30);
+                const endDate = currentDate;
                 
-                const response = await fetch(AppConfig.getApiUrl(`/attendance/history?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`), {
+                const response = await fetch(AppConfig.getApiUrl(`/attendance/history?start_date=${startDate}&end_date=${endDate}`), {
                     headers: {
                         'Authorization': `Bearer ${getAccessToken()}`
                     }
@@ -656,35 +671,58 @@
                     // Not yet timed in
                     badge.textContent = 'Not yet timed in';
                     badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-slate-700/50 text-slate-400 border-slate-600 mt-1';
-                    timeInBtn.disabled = false;
-                    timeInBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
-                    timeOutBtn.disabled = true;
-                    timeOutBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+                    setActionButtonState(timeInBtn, true);
+                    setActionButtonState(timeOutBtn, false);
                 } else if (today.time_in && !today.time_out) {
                     // Timed in, not yet timed out
                     badge.textContent = 'Timed in at ' + formatTime(today.time_in);
                     badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-green-500/20 text-green-400 border-green-500/30 mt-1';
-                    timeInBtn.disabled = true;
-                    timeInBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
-                    timeOutBtn.disabled = false;
-                    timeOutBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
+                    setActionButtonState(timeInBtn, false);
+                    setActionButtonState(timeOutBtn, true);
                 } else if (today.time_in && today.time_out) {
                     // Completed
                     badge.textContent = 'Completed - ' + today.work_hours + ' hrs';
                     badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-blue-500/20 text-blue-400 border-blue-500/30 mt-1';
-                    timeInBtn.disabled = true;
-                    timeInBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
-                    timeOutBtn.disabled = true;
-                    timeOutBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+                    setActionButtonState(timeInBtn, false);
+                    setActionButtonState(timeOutBtn, false);
                 }
             } else {
                 // No record for today
                 badge.textContent = 'Not yet timed in';
                 badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-slate-700/50 text-slate-400 border-slate-600 mt-1';
-                timeInBtn.disabled = false;
-                timeInBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
-                timeOutBtn.disabled = true;
-                timeOutBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+                setActionButtonState(timeInBtn, true);
+                setActionButtonState(timeOutBtn, false);
+            }
+        }
+
+        function getPhilippinesDateWithOffset(offsetDays) {
+            const base = new Date();
+            base.setDate(base.getDate() + offsetDays);
+            const philippinesDateStr = base.toLocaleString('en-US', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = philippinesDateStr.match(/(\d+)\/(\d+)\/(\d+)/);
+            return `${parts[3]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        }
+
+        function setActionButtonState(button, isEnabled) {
+            button.disabled = !isEnabled;
+            if (isEnabled) {
+                button.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale', 'from-slate-700', 'to-slate-800', 'hover:from-slate-700', 'hover:to-slate-800', 'text-slate-400');
+                button.classList.add('text-white');
+                if (button.id === 'time-in-btn') {
+                    button.classList.add('from-green-600', 'to-green-700', 'hover:from-green-700', 'hover:to-green-800');
+                    button.classList.remove('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800');
+                } else {
+                    button.classList.add('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800');
+                    button.classList.remove('from-green-600', 'to-green-700', 'hover:from-green-700', 'hover:to-green-800');
+                }
+            } else {
+                button.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale', 'from-slate-700', 'to-slate-800', 'hover:from-slate-700', 'hover:to-slate-800', 'text-slate-400');
+                button.classList.remove('from-green-600', 'to-green-700', 'hover:from-green-700', 'hover:to-green-800', 'from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'text-white');
             }
         }
 

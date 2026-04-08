@@ -386,9 +386,47 @@
     <script src="<?= base_url('/assets/js/utils.js') ?>"></script>
     <script>
         let currentUser = null;
-        let currentDate = new Date().toISOString().split('T')[0];
+        let currentDate = getPhilippinesDate();
         let attendanceAction = null;
         let leaveTypesMap = {}; // Store leave types for display
+        const attendanceSyncKey = 'attendance:last-update';
+
+        function getPhilippinesDate() {
+            return getPhilippinesDateFromDate(new Date());
+        }
+
+        function getPhilippinesDateFromDate(date) {
+            const philippinesDateStr = date.toLocaleString('en-US', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = philippinesDateStr.match(/(\d+)\/(\d+)\/(\d+)/);
+            return `${parts[3]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        }
+
+        function getPhilippinesDateWithOffset(offsetDays) {
+            const base = new Date();
+            base.setDate(base.getDate() + offsetDays);
+            return getPhilippinesDateFromDate(base);
+        }
+
+        function getPhilippinesTime() {
+            const now = new Date();
+            const philippinesTimeStr = now.toLocaleString('en-US', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = philippinesTimeStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
+            return `${parts[3]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')} ${parts[4].padStart(2, '0')}:${parts[5].padStart(2, '0')}:${parts[6].padStart(2, '0')}`;
+        }
 
         // Update clock
         function updateClock() {
@@ -425,6 +463,18 @@
                 // Load dashboard data
                 await loadDashboardData();
                 
+                window.addEventListener('storage', function(event) {
+                    if (event.key === attendanceSyncKey && document.visibilityState === 'visible') {
+                        refreshAttendanceState();
+                    }
+                });
+
+                document.addEventListener('visibilitychange', function() {
+                    if (document.visibilityState === 'visible') {
+                        refreshAttendanceState();
+                    }
+                });
+
                 // Hide loading screen
                 hideLoading();
             } catch (error) {
@@ -476,6 +526,7 @@
         // Load today's attendance status
         async function loadTodayAttendance() {
             try {
+                currentDate = getPhilippinesDate();
                 const response = await fetch(AppConfig.getApiUrl(`/attendance/daily?date=${currentDate}`), {
                     headers: { 'Authorization': `Bearer ${getAccessToken()}` }
                 });
@@ -519,26 +570,20 @@
                 // Not yet timed in
                 badge.textContent = 'Not yet timed in';
                 badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-slate-700/50 text-slate-400 border-slate-600 mt-1';
-                timeInBtn.disabled = false;
-                timeInBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
-                timeOutBtn.disabled = true;
-                timeOutBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+                setActionButtonState(timeInBtn, true);
+                setActionButtonState(timeOutBtn, false);
             } else if (record.time_in && !record.time_out) {
                 // Timed in, not yet timed out
                 badge.textContent = 'Timed in at ' + formatTime(record.time_in);
                 badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-green-500/20 text-green-400 border-green-500/30 mt-1';
-                timeInBtn.disabled = true;
-                timeInBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
-                timeOutBtn.disabled = false;
-                timeOutBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
+                setActionButtonState(timeInBtn, false);
+                setActionButtonState(timeOutBtn, true);
             } else if (record.time_in && record.time_out) {
                 // Completed
                 badge.textContent = 'Completed - ' + record.work_hours + ' hours';
                 badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-blue-500/20 text-blue-400 border-blue-500/30 mt-1';
-                timeInBtn.disabled = true;
-                timeInBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
-                timeOutBtn.disabled = true;
-                timeOutBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+                setActionButtonState(timeInBtn, false);
+                setActionButtonState(timeOutBtn, false);
             }
         }
         
@@ -566,11 +611,10 @@
         // Load attendance rate
         async function loadAttendanceRate() {
             try {
-                const startDate = new Date();
-                startDate.setDate(1); // First day of current month
-                const endDate = new Date();
+                const startDate = getPhilippinesDateWithOffset(-(new Date().getDate() - 1));
+                const endDate = getPhilippinesDate();
                 
-                const response = await fetch(AppConfig.getApiUrl(`/attendance/history?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`), {
+                const response = await fetch(AppConfig.getApiUrl(`/attendance/history?start_date=${startDate}&end_date=${endDate}`), {
                     headers: { 'Authorization': `Bearer ${getAccessToken()}` }
                 });
                 
@@ -615,11 +659,10 @@
         // Load work hours
         async function loadWorkHours() {
             try {
-                const startDate = new Date();
-                startDate.setDate(1); // First day of current month
-                const endDate = new Date();
+                const startDate = getPhilippinesDateWithOffset(-(new Date().getDate() - 1));
+                const endDate = getPhilippinesDate();
                 
-                const response = await fetch(AppConfig.getApiUrl(`/attendance/history?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`), {
+                const response = await fetch(AppConfig.getApiUrl(`/attendance/history?start_date=${startDate}&end_date=${endDate}`), {
                     headers: { 'Authorization': `Bearer ${getAccessToken()}` }
                 });
                 
@@ -659,10 +702,19 @@
                 // Add attendance activities
                 if (attendanceResult.success && attendanceResult.data.records) {
                     attendanceResult.data.records.forEach(record => {
+                        const hasTimeIn = !!record.time_in;
+                        const hasTimeOut = !!record.time_out;
+                        const activityTime = record.time_out || record.time_in || record.date;
+                        let description = `Attendance: ${record.status}`;
+                        if (hasTimeIn && !hasTimeOut) {
+                            description = `Timed in (${record.status})`;
+                        } else if (hasTimeIn && hasTimeOut) {
+                            description = `Timed out (${record.status})`;
+                        }
                         activities.push({
                             type: 'attendance',
-                            date: record.date,
-                            description: `Attendance: ${record.status}`,
+                            date: activityTime,
+                            description,
                             status: record.status,
                             icon: 'clock'
                         });
@@ -885,28 +937,9 @@
                 btn.disabled = true;
                 btn.innerHTML = '<span class="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>Processing...';
                 
-                // Get current time in Philippines timezone
-                const now = new Date();
-                
-                // Method 1: Using toLocaleString to get Philippines time
-                const philippinesTimeStr = now.toLocaleString('en-US', { 
-                    timeZone: 'Asia/Manila',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
-                
-                // Parse and format as YYYY-MM-DD HH:MM:SS
-                const parts = philippinesTimeStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
-                const formattedTime = `${parts[3]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')} ${parts[4].padStart(2, '0')}:${parts[5].padStart(2, '0')}:${parts[6].padStart(2, '0')}`;
-                
+                currentDate = getPhilippinesDate();
+                const formattedTime = getPhilippinesTime();
                 console.log('=== TIME IN/OUT DEBUG ===');
-                console.log('Browser time:', now.toString());
-                console.log('Philippines time string:', philippinesTimeStr);
                 console.log('Formatted time to send:', formattedTime);
                 console.log('Action:', attendanceAction);
                 
@@ -933,8 +966,8 @@
                 if (result.success) {
                     showSuccess(attendanceAction === 'timein' ? 'Time-in recorded successfully!' : 'Time-out recorded successfully!');
                     closeAttendanceModal();
-                    await loadTodayAttendance();
-                    await loadWeeklyAttendance();
+                    localStorage.setItem(attendanceSyncKey, String(Date.now()));
+                    await refreshAttendanceState();
                 } else {
                     showError(result.message || `Failed to record ${attendanceAction}`);
                 }
@@ -1132,20 +1165,46 @@
             return formatted;
         }
         
+        function setActionButtonState(button, isEnabled) {
+            button.disabled = !isEnabled;
+            if (isEnabled) {
+                button.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale', 'from-slate-700', 'to-slate-800', 'hover:from-slate-700', 'hover:to-slate-800', 'text-slate-400');
+                button.classList.add('text-white');
+                if (button.id === 'time-in-btn') {
+                    button.classList.add('from-green-600', 'to-green-700', 'hover:from-green-700', 'hover:to-green-800');
+                    button.classList.remove('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800');
+                } else {
+                    button.classList.add('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800');
+                    button.classList.remove('from-green-600', 'to-green-700', 'hover:from-green-700', 'hover:to-green-800');
+                }
+            } else {
+                button.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale', 'from-slate-700', 'to-slate-800', 'hover:from-slate-700', 'hover:to-slate-800', 'text-slate-400');
+                button.classList.remove('from-green-600', 'to-green-700', 'hover:from-green-700', 'hover:to-green-800', 'from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'text-white');
+            }
+        }
+
+        async function refreshAttendanceState() {
+            await Promise.all([
+                loadTodayAttendance(),
+                loadWeeklyAttendance(),
+                loadRecentActivity(),
+                loadAttendanceRate(),
+                loadWorkHours()
+            ]);
+        }
+
         function getWeekStart() {
             const now = new Date();
-            const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-            const monday = new Date(now.setDate(diff));
-            return monday.toISOString().split('T')[0];
+            const day = now.getDay() || 7;
+            now.setDate(now.getDate() - day + 1);
+            return getPhilippinesDateFromDate(now);
         }
         
         function getWeekEnd() {
             const now = new Date();
-            const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? 0 : 7); // Adjust when day is Sunday
-            const sunday = new Date(now.setDate(diff));
-            return sunday.toISOString().split('T')[0];
+            const day = now.getDay() || 7;
+            now.setDate(now.getDate() + (7 - day));
+            return getPhilippinesDateFromDate(now);
         }
         
         function hideLoading() {

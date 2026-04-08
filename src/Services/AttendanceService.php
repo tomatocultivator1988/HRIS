@@ -65,9 +65,17 @@ class AttendanceService
             // Check if attendance record already exists for this date
             $existingRecord = $this->attendanceModel->findByEmployeeAndDate($employeeId, $date);
             if ($existingRecord) {
-                throw new ValidationException('Time-in already recorded for this date', [
-                    'date' => 'Time-in already recorded for this date'
-                ]);
+                if (!empty($existingRecord['time_in'])) {
+                    throw new ValidationException('Time-in already recorded for this date', [
+                        'date' => 'Time-in already recorded for this date'
+                    ]);
+                }
+
+                if (($existingRecord['status'] ?? '') === 'On Leave') {
+                    throw new ValidationException('Cannot record time-in while marked as on leave', [
+                        'date' => 'Cannot record time-in while marked as on leave'
+                    ]);
+                }
             }
             
             // Validate that the date is a working day
@@ -80,27 +88,45 @@ class AttendanceService
             // Calculate attendance status based on time-in
             $status = $this->attendanceModel->determineStatus($timeIn);
             
-            // Create attendance record
-            $attendanceData = [
-                'employee_id' => $employeeId,
-                'date' => $date,
-                'time_in' => $timeIn,
-                'status' => $status,
-                'work_hours' => null,
-                'remarks' => null
-            ];
-            
-            error_log('Attendance data to insert: ' . json_encode($attendanceData));
-            
-            $newRecord = $this->attendanceModel->create($attendanceData);
-            
-            error_log('Record created: ' . json_encode($newRecord));
-            
-            if (empty($newRecord)) {
-                throw new Exception('Failed to create attendance record - empty result from database');
+            if ($existingRecord) {
+                $updateData = [
+                    'time_in' => $timeIn,
+                    'status' => $status,
+                    'time_out' => null,
+                    'work_hours' => null,
+                    'remarks' => null
+                ];
+
+                $this->attendanceModel->update($existingRecord['id'], $updateData);
+                $updatedRecord = $this->attendanceModel->find($existingRecord['id']);
+                if (empty($updatedRecord)) {
+                    throw new Exception('Failed to update existing attendance record');
+                }
+
+                return $this->formatAttendanceData($updatedRecord);
+            } else {
+                // Create attendance record
+                $attendanceData = [
+                    'employee_id' => $employeeId,
+                    'date' => $date,
+                    'time_in' => $timeIn,
+                    'status' => $status,
+                    'work_hours' => null,
+                    'remarks' => null
+                ];
+                
+                error_log('Attendance data to insert: ' . json_encode($attendanceData));
+                
+                $newRecord = $this->attendanceModel->create($attendanceData);
+                
+                error_log('Record created: ' . json_encode($newRecord));
+                
+                if (empty($newRecord)) {
+                    throw new Exception('Failed to create attendance record - empty result from database');
+                }
+                
+                return $this->formatAttendanceData($newRecord);
             }
-            
-            return $this->formatAttendanceData($newRecord);
             
         } catch (ValidationException $e) {
             throw $e;
@@ -145,8 +171,11 @@ class AttendanceService
             // Find existing attendance record for this date
             $existingRecord = $this->attendanceModel->findByEmployeeAndDate($employeeId, $date);
             
-            if (!$existingRecord) {
-                throw new NotFoundException('No time-in record found for this date');
+            if (!$existingRecord || empty($existingRecord['time_in'])) {
+                $existingRecord = $this->attendanceModel->findLatestOpenRecord($employeeId);
+                if (!$existingRecord) {
+                    throw new NotFoundException('No time-in record found for this date');
+                }
             }
             
             // Check if time-out is already recorded
@@ -645,7 +674,7 @@ class AttendanceService
             'date' => $attendance['date'],
             'time_in' => $attendance['time_in'],
             'time_out' => $attendance['time_out'],
-            'work_hours' => $attendance['work_hours'] ? floatval($attendance['work_hours']) : null,
+            'work_hours' => ($attendance['work_hours'] !== null && $attendance['work_hours'] !== '') ? floatval($attendance['work_hours']) : null,
             'status' => $attendance['status'],
             'remarks' => $attendance['remarks'],
             'created_at' => $attendance['created_at'] ?? null,
