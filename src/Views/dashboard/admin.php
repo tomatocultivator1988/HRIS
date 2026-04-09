@@ -10,15 +10,6 @@
     <link rel="stylesheet" href="<?= base_url('/assets/css/loading-skeletons.css') ?>">
 </head>
 <body class="h-full bg-slate-900 overflow-hidden">
-    <!-- Loading Screen -->
-    <div id="dashboard-loading" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
-        <div class="text-center">
-            <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
-            <h2 class="text-2xl font-semibold text-white">Loading Dashboard...</h2>
-            <p class="text-slate-400 mt-2">Please wait while we fetch your data</p>
-        </div>
-    </div>
-
     <!-- Main Dashboard Container -->
     <div class="flex h-full bg-slate-900">
         
@@ -60,6 +51,20 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Leave Requests
+                </a>
+                
+                <a href="<?= base_url('/compensation') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Manage Salaries
+                </a>
+                
+                <a href="<?= base_url('/payroll/simple') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 .895-4 2s1.79 2 4 2 4 .895 4 2-1.79 2-4 2m0-10V6m0 12v-2m9-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Payroll
                 </a>
                 
                 <a href="<?= base_url('/reports') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
@@ -222,13 +227,10 @@
         
         // Load dashboard metrics from API
         document.addEventListener('DOMContentLoaded', async function() {
-            const loadingScreen = document.getElementById('dashboard-loading');
-            
             try {
                 const token = localStorage.getItem('hris_token');
                 if (!token) {
                     console.error('No auth token found');
-                    loadingScreen.style.display = 'none';
                     alert('Authentication required. Please log in again.');
                     window.location.href = window.AppConfig ? window.AppConfig.url('login') : '/HRIS/login';
                     return;
@@ -278,24 +280,12 @@
                             window.DashboardCharts.updateAttendanceTrend(data.data.charts.attendanceTrend);
                         }
                     }
-                    
-                    // Hide loading screen after successful load
-                    setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
-                        loadingScreen.style.transition = 'opacity 0.3s ease-out';
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                        }, 300);
-                    }, 500);
-                    
                 } else {
                     console.error('Failed to load metrics:', data.message);
-                    loadingScreen.style.display = 'none';
                     alert('Failed to load dashboard metrics: ' + (data.message || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error loading dashboard metrics:', error);
-                loadingScreen.style.display = 'none';
                 alert('Error loading dashboard metrics. Please refresh the page.');
             }
         });

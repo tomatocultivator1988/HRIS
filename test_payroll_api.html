@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Payroll API</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e293b; color: #e2e8f0; }
+        button { padding: 10px 20px; margin: 10px 0; background: #3b82f6; color: white; border: none; cursor: pointer; }
+        button:hover { background: #2563eb; }
+        pre { background: #0f172a; padding: 15px; border-radius: 5px; overflow: auto; }
+        input { padding: 8px; margin: 5px 0; width: 300px; background: #334155; color: white; border: 1px solid #475569; }
+        .error { color: #ef4444; }
+        .success { color: #10b981; }
+    </style>
+</head>
+<body>
+    <h1>Payroll API Tester</h1>
+    
+    <h2>Step 1: Test Authentication</h2>
+    <button onclick="testAuth()">Test Auth Token</button>
+    
+    <h2>Step 2: Create Payroll Period</h2>
+    <div>
+        <label>Code:</label><br>
+        <input type="text" id="code" value="2026-05"><br>
+        
+        <label>Start Date:</label><br>
+        <input type="date" id="start" value="2026-05-01"><br>
+        
+        <label>End Date:</label><br>
+        <input type="date" id="end" value="2026-05-31"><br>
+        
+        <label>Pay Date:</label><br>
+        <input type="date" id="payDate" value="2026-06-05"><br>
+        
+        <button onclick="createPeriod()">Create Period</button>
+    </div>
+    
+    <h2>Step 3: Generate Payroll Run</h2>
+    <div>
+        <label>Period ID (from Step 2):</label><br>
+        <input type="text" id="periodId" value="7dc7690e-d8f8-4ffb-b8bd-0846101a69ad" style="width: 400px;"><br>
+        
+        <label>
+            <input type="checkbox" id="includeOvertime" checked>
+            Include Overtime
+        </label><br>
+        
+        <button onclick="generateRun()">Generate Payroll Run</button>
+    </div>
+    
+    <h2>Step 4: View Payroll Details</h2>
+    <div>
+        <label>Run ID (from Step 3):</label><br>
+        <input type="text" id="runId" value="" style="width: 400px;"><br>
+        
+        <button onclick="viewRun()">View Run Details</button>
+    </div>
+    
+    <h2>Response:</h2>
+    <pre id="output">Waiting for request...</pre>
+    
+    <script>
+        const BASE_URL = 'http://localhost/HRIS';
+        const token = localStorage.getItem('hris_token');
+        
+        if (!token) {
+            document.getElementById('output').innerHTML = '<span class="error">ERROR: No token found in localStorage.\nPlease login first at ' + BASE_URL + '/login</span>';
+        }
+        
+        function log(message, isError = false) {
+            const output = document.getElementById('output');
+            const className = isError ? 'error' : 'success';
+            output.innerHTML = `<span class="${className}">${message}</span>`;
+        }
+        
+        async function testAuth() {
+            log('Testing authentication...');
+            
+            try {
+                const response = await fetch(BASE_URL + '/api/auth/me', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    log('✓ Authentication successful!\n\nUser: ' + JSON.stringify(result, null, 2));
+                } else {
+                    log('✗ Authentication failed!\n\n' + JSON.stringify(result, null, 2), true);
+                }
+            } catch (error) {
+                log('✗ Network error: ' + error.message, true);
+            }
+        }
+        
+        async function createPeriod() {
+            const code = document.getElementById('code').value;
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            const payDate = document.getElementById('payDate').value;
+            
+            log('Creating payroll period...\n\nRequest:\n' + JSON.stringify({
+                code,
+                start_date: start,
+                end_date: end,
+                pay_date: payDate
+            }, null, 2));
+            
+            const idempotencyKey = 'test-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+            
+            try {
+                const response = await fetch(BASE_URL + '/api/payroll/periods', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Idempotency-Key': idempotencyKey
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        start_date: start,
+                        end_date: end,
+                        pay_date: payDate
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    log('✓ Period created successfully!\n\nResponse:\n' + JSON.stringify(result, null, 2));
+                } else {
+                    log('✗ Failed to create period!\n\nHTTP ' + response.status + ': ' + response.statusText + '\n\nResponse:\n' + JSON.stringify(result, null, 2), true);
+                }
+            } catch (error) {
+                log('✗ Network error: ' + error.message + '\n\nStack:\n' + error.stack, true);
+            }
+        }
+        
+        async function generateRun() {
+            const periodId = document.getElementById('periodId').value.trim();
+            const includeOvertime = document.getElementById('includeOvertime').checked;
+            
+            if (!periodId) {
+                log('Please enter a Period ID from Step 2', true);
+                return;
+            }
+            
+            log('Generating payroll run...\n\nRequest:\n' + JSON.stringify({
+                payroll_period_id: periodId,
+                include_overtime: includeOvertime
+            }, null, 2));
+            
+            const idempotencyKey = 'test-run-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+            
+            try {
+                const response = await fetch(BASE_URL + '/api/payroll/runs/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Idempotency-Key': idempotencyKey
+                    },
+                    body: JSON.stringify({
+                        payroll_period_id: periodId,
+                        include_overtime: includeOvertime
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const runId = result.data?.run?.id;
+                    if (runId) {
+                        document.getElementById('runId').value = runId;
+                    }
+                    log('✓ Payroll run generated successfully!\n\nResponse:\n' + JSON.stringify(result, null, 2));
+                } else {
+                    log('✗ Failed to generate run!\n\nHTTP ' + response.status + ': ' + response.statusText + '\n\nResponse:\n' + JSON.stringify(result, null, 2), true);
+                }
+            } catch (error) {
+                log('✗ Network error: ' + error.message + '\n\nStack:\n' + error.stack, true);
+            }
+        }
+        
+        async function viewRun() {
+            const runId = document.getElementById('runId').value.trim();
+            
+            if (!runId) {
+                log('Please enter a Run ID from Step 3', true);
+                return;
+            }
+            
+            log('Fetching run details...');
+            
+            try {
+                const response = await fetch(BASE_URL + '/api/payroll/runs/' + encodeURIComponent(runId), {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    log('✓ Run details retrieved!\n\nResponse:\n' + JSON.stringify(result, null, 2));
+                } else {
+                    log('✗ Failed to get run!\n\nHTTP ' + response.status + ': ' + response.statusText + '\n\nResponse:\n' + JSON.stringify(result, null, 2), true);
+                }
+            } catch (error) {
+                log('✗ Network error: ' + error.message + '\n\nStack:\n' + error.stack, true);
+            }
+        }
+    </script>
+</body>
+</html>

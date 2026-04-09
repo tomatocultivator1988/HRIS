@@ -59,6 +59,11 @@ $config = [
         'leave_types' => env('TABLE_LEAVE_TYPES', 'leave_types'),
         'leave_requests' => env('TABLE_LEAVE_REQUESTS', 'leave_requests'),
         'leave_credits' => env('TABLE_LEAVE_CREDITS', 'leave_credits'),
+        'payroll_periods' => env('TABLE_PAYROLL_PERIODS', 'payroll_periods'),
+        'employee_compensation' => env('TABLE_EMPLOYEE_COMPENSATION', 'employee_compensation'),
+        'payroll_runs' => env('TABLE_PAYROLL_RUNS', 'payroll_runs'),
+        'payroll_line_items' => env('TABLE_PAYROLL_LINE_ITEMS', 'payroll_line_items'),
+        'payroll_adjustments' => env('TABLE_PAYROLL_ADJUSTMENTS', 'payroll_adjustments'),
         'announcements' => env('TABLE_ANNOUNCEMENTS', 'announcements'),
         'work_calendar' => env('TABLE_WORK_CALENDAR', 'work_calendar'),
         'user_sessions' => env('TABLE_USER_SESSIONS', 'user_sessions'),
@@ -86,6 +91,11 @@ if (!defined('TABLE_ATTENDANCE')) define('TABLE_ATTENDANCE', $config['tables']['
 if (!defined('TABLE_LEAVE_TYPES')) define('TABLE_LEAVE_TYPES', $config['tables']['leave_types']);
 if (!defined('TABLE_LEAVE_REQUESTS')) define('TABLE_LEAVE_REQUESTS', $config['tables']['leave_requests']);
 if (!defined('TABLE_LEAVE_CREDITS')) define('TABLE_LEAVE_CREDITS', $config['tables']['leave_credits']);
+if (!defined('TABLE_PAYROLL_PERIODS')) define('TABLE_PAYROLL_PERIODS', $config['tables']['payroll_periods']);
+if (!defined('TABLE_EMPLOYEE_COMPENSATION')) define('TABLE_EMPLOYEE_COMPENSATION', $config['tables']['employee_compensation']);
+if (!defined('TABLE_PAYROLL_RUNS')) define('TABLE_PAYROLL_RUNS', $config['tables']['payroll_runs']);
+if (!defined('TABLE_PAYROLL_LINE_ITEMS')) define('TABLE_PAYROLL_LINE_ITEMS', $config['tables']['payroll_line_items']);
+if (!defined('TABLE_PAYROLL_ADJUSTMENTS')) define('TABLE_PAYROLL_ADJUSTMENTS', $config['tables']['payroll_adjustments']);
 if (!defined('TABLE_ANNOUNCEMENTS')) define('TABLE_ANNOUNCEMENTS', $config['tables']['announcements']);
 if (!defined('TABLE_WORK_CALENDAR')) define('TABLE_WORK_CALENDAR', $config['tables']['work_calendar']);
 if (!defined('TABLE_USER_SESSIONS')) define('TABLE_USER_SESSIONS', $config['tables']['user_sessions']);

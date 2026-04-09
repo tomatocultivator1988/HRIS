@@ -469,6 +469,74 @@ class AuthManager {
     }
 
     /**
+     * Fetch wrapper that handles 401 errors automatically
+     * @param {string} url - URL to fetch
+     * @param {Object} options - Fetch options
+     * @returns {Promise<Response>} Fetch response
+     */
+    async authFetch(url, options = {}) {
+        const response = await fetch(url, options);
+        
+        if (response.status === 401) {
+            // Token expired, try to refresh
+            const refreshed = await this.refreshToken();
+            if (refreshed) {
+                // Retry the request with new token
+                const newToken = this.getToken();
+                if (options.headers && options.headers.Authorization) {
+                    options.headers.Authorization = 'Bearer ' + newToken;
+                }
+                return await fetch(url, options);
+            } else {
+                // Refresh failed, show session expired modal
+                this.showSessionExpiredModal();
+                throw new Error('Session expired');
+            }
+        }
+        
+        return response;
+    }
+
+    /**
+     * Show session expired modal
+     * @private
+     */
+    showSessionExpiredModal() {
+        let modal = document.getElementById('session-expired-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'session-expired-modal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-slate-800 rounded-xl border border-yellow-700 w-full max-w-md">
+                    <div class="p-6 border-b border-yellow-700 bg-yellow-900/30">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <h3 class="text-xl font-bold text-yellow-400">Session Expired</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <p class="text-slate-300">Your session has expired. Please login again to continue.</p>
+                    </div>
+                    
+                    <div class="p-6 border-t border-slate-700 flex justify-end">
+                        <button id="session-expired-ok-btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">Go to Login</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            document.getElementById('session-expired-ok-btn').addEventListener('click', () => {
+                window.location.href = window.AppConfig ? window.AppConfig.getBaseUrl('/login') : '/HRIS/login';
+            });
+        }
+        modal.classList.remove('hidden');
+    }
+
+    /**
      * Check session timeout and redirect if necessary
      */
     checkSessionTimeout() {

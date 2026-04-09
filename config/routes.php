@@ -60,6 +60,20 @@ return function (Router $router) {
     $router->addRoute('GET', '/api/reports/attendance.php', 'ReportController@attendance', ['logging', 'auth', 'role:admin']);
     $router->addRoute('GET', '/api/reports/leave.php', 'ReportController@leave', ['logging', 'auth', 'role:admin']);
     $router->addRoute('GET', '/api/reports/headcount.php', 'ReportController@headcount', ['logging', 'auth', 'role:admin']);
+
+    // Legacy payroll endpoints (for backward compatibility)
+    $router->addRoute('POST', '/api/payroll/periods.php', 'PayrollController@createPeriod', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/payroll/periods.php', 'PayrollController@listPeriods', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/payroll/runs/generate.php', 'PayrollController@generateRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/payroll/runs/detail.php', 'PayrollController@getRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/payroll/runs/recompute.php', 'PayrollController@recomputeRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/runs/finalize.php', 'PayrollController@finalizeRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/runs/approve.php', 'PayrollController@approveRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/runs/pay.php', 'PayrollController@markRunPaid', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/payroll/runs/reverse.php', 'PayrollController@reverseRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/line-items/update.php', 'PayrollController@updateLineItem', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/payroll/payslips.php', 'PayrollController@employeePayslips', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/payroll/payslip.php', 'PayrollController@employeePayslipDetail', ['logging', 'auth']);
     
     // Web routes (HTML responses)
     $router->addRoute('GET', '/', 'AuthController@loginForm', ['logging']);
@@ -87,6 +101,10 @@ return function (Router $router) {
     $router->addRoute('GET', '/reports/leave-view', 'ReportController@leaveView', ['logging']);
     $router->addRoute('GET', '/reports/employees-view', 'ReportController@employeesView', ['logging']);
     $router->addRoute('GET', '/reports/productivity-view', 'ReportController@productivityView', ['logging']);
+    $router->addRoute('GET', '/payroll', 'PayrollController@indexView', ['logging']);
+    $router->addRoute('GET', '/payroll/simple', 'PayrollController@simpleView', ['logging']);
+    $router->addRoute('GET', '/payroll/manage', 'PayrollController@manageView', ['logging']);
+    $router->addRoute('GET', '/payslips', 'PayrollController@payslipsView', ['logging']);
     
     // Profile web route
     $router->addRoute('GET', '/profile', 'EmployeeController@profileView', ['logging']);
@@ -136,6 +154,35 @@ return function (Router $router) {
     $router->addRoute('PUT', '/api/leave/{id}/deny', 'LeaveController@deny', ['logging', 'auth', 'role:admin']);
     $router->addRoute('GET', '/api/leave/types', 'LeaveController@types', ['logging', 'auth']);
     $router->addRoute('GET', '/api/leave/credits', 'LeaveController@credits', ['logging', 'auth', 'role:admin']);
+
+    // Payroll API routes
+    $router->addRoute('POST', '/api/payroll/periods', 'PayrollController@createPeriod', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/payroll/periods', 'PayrollController@listPeriods', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/payroll/periods/{id}/runs', 'PayrollController@getPeriodRuns', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/payroll/runs/generate', 'PayrollController@generateRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/payroll/runs/{id}', 'PayrollController@getRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/payroll/runs/{id}/recompute', 'PayrollController@recomputeRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/runs/{id}/finalize', 'PayrollController@finalizeRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/runs/{id}/approve', 'PayrollController@approveRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/runs/{id}/pay', 'PayrollController@markRunPaid', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/payroll/runs/{id}/reverse', 'PayrollController@reverseRun', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/line-items/{id}', 'PayrollController@updateLineItem', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/payroll/line-items/{id}/pay', 'PayrollController@markLineItemPaid', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/payroll/payslips', 'PayrollController@employeePayslips', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/payroll/payslips/{id}', 'PayrollController@employeePayslipDetail', ['logging', 'auth']);
+    
+    // Compensation API routes (Position-based)
+    $router->addRoute('GET', '/compensation', 'CompensationController@indexView', ['logging']);
+    $router->addRoute('GET', '/api/compensation/positions', 'CompensationController@listPositions', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/compensation/positions/{position}', 'CompensationController@getPositionSalary', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/compensation/positions', 'CompensationController@createPositionSalary', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/compensation/positions/{id}', 'CompensationController@updatePositionSalary', ['logging', 'auth', 'role:admin']);
+    
+    // Legacy employee-based compensation routes (for backward compatibility)
+    $router->addRoute('GET', '/api/compensation/list', 'CompensationController@listEmployeesWithCompensation', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('GET', '/api/compensation/{id}', 'CompensationController@getEmployeeCompensation', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('POST', '/api/compensation', 'CompensationController@createCompensation', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/compensation/{id}', 'CompensationController@updateCompensation', ['logging', 'auth', 'role:admin']);
     
     // Reports API routes
     $router->addRoute('GET', '/api/reports/attendance', 'ReportController@attendance', ['logging', 'auth', 'role:admin']);

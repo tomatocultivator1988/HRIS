@@ -9,17 +9,11 @@
 </head>
 <body class="h-full bg-slate-900">
     <!-- Loading Screen -->
-    <div id="page-loading" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
-        <div class="text-center">
-            <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
-            <h2 class="text-2xl font-semibold text-white">Loading Reports...</h2>
-            <p class="text-slate-400 mt-2">Please wait</p>
-        </div>
-    </div>
+    
 
     <div class="flex h-full">
         <!-- Sidebar -->
-        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        <?php $currentPage = 'reports'; include __DIR__ . '/../layouts/admin_sidebar.php'; ?>
         
         <!-- Main Content -->
         <div class="flex-1 overflow-y-auto">
@@ -278,22 +272,6 @@
                         el.textContent = '0';
                     }
                 });
-            } finally {
-                // Hide loading screen after data is loaded
-                hideLoadingScreen();
-            }
-        }
-
-        function hideLoadingScreen() {
-            const loadingScreen = document.getElementById('page-loading');
-            if (loadingScreen) {
-                setTimeout(() => {
-                    loadingScreen.style.opacity = '0';
-                    loadingScreen.style.transition = 'opacity 0.3s ease-out';
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                    }, 300);
-                }, 300);
             }
         }
 
