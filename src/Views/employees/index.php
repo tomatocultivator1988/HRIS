@@ -483,11 +483,11 @@
                                 </svg>
                                 <span>Edit</span>
                             </button>
-                            <button onclick="deleteEmployee('${emp.id}')" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all flex items-center space-x-1">
+                            <button onclick="deactivateEmployee('${emp.id}')" class="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-all flex items-center space-x-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                 </svg>
-                                <span>Delete</span>
+                                <span>Deactivate</span>
                             </button>
                         </div>
                     </td>
@@ -820,7 +820,7 @@
             }
         }
 
-        async function deleteEmployee(id) {
+        async function deactivateEmployee(id) {
             const employee = employees.find(e => e.id === id);
             if (!employee) {
                 showSuccess('Error', 'Employee not found', null);
@@ -828,10 +828,10 @@
             }
 
             showConfirm(
-                'Delete Employee',
-                `Are you sure you want to delete ${employee.first_name} ${employee.last_name}? This action cannot be undone.`,
+                'Deactivate Employee?',
+                `Are you sure you want to deactivate ${employee.first_name} ${employee.last_name}? They will no longer be able to access the system, but all their records will be preserved.`,
                 async function() {
-                    showLoading('Deleting employee...');
+                    showLoading('Deactivating employee...');
                     
                     const token = localStorage.getItem('hris_token');
 
@@ -850,18 +850,18 @@
 
                         if (result.success) {
                             showSuccess(
-                                'Employee Deleted!',
-                                `${employee.first_name} ${employee.last_name} has been deleted successfully.`,
+                                'Employee Deactivated!',
+                                `${employee.first_name} ${employee.last_name} has been deactivated successfully.`,
                                 null
                             );
                             loadEmployees(); // Reload the list
                         } else {
-                            showSuccess('Error', result.message || 'Failed to delete employee', null);
+                            showSuccess('Error', result.message || 'Failed to deactivate employee', null);
                         }
                     } catch (error) {
                         hideLoading();
-                        console.error('Error deleting employee:', error);
-                        showSuccess('Error', 'Failed to delete employee. Please try again.', null);
+                        console.error('Error deactivating employee:', error);
+                        showSuccess('Error', 'Failed to deactivate employee. Please try again.', null);
                     }
                 }
             );

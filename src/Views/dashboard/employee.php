@@ -9,15 +9,6 @@
     <link rel="stylesheet" href="<?= base_url('/assets/css/loading-skeletons.css') ?>">
 </head>
 <body class="h-full bg-slate-900 overflow-hidden">
-    <!-- Loading Screen -->
-    <div id="page-loading" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
-        <div class="text-center">
-            <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
-            <h2 class="text-2xl font-semibold text-white">Loading Dashboard...</h2>
-            <p class="text-slate-400 mt-2">Please wait</p>
-        </div>
-    </div>
-
     <!-- Main Container -->
     <div class="flex h-full bg-slate-900">
         
@@ -159,73 +150,33 @@
                 <p class="text-slate-400 mt-2">Please wait</p>
             </div>
         </div>
-        
-        <!-- Sidebar -->
-        <aside class="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
-            <!-- Logo -->
-            <div class="p-6 border-b border-slate-700">
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                    HRIS MVP
-                </h1>
-                <p class="text-xs text-slate-400 mt-1">Human Resources System</p>
-            </div>
-            
-            <!-- Navigation -->
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <a href="<?= base_url('/dashboard/employee') ?>" class="flex items-center px-4 py-3 text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg shadow-blue-900/50">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    Dashboard
-                </a>
-                
-                <a href="<?= base_url('/attendance') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                    My Attendance
-                </a>
-                
-                <a href="<?= base_url('/leave') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Leave Requests
-                </a>
-                
-                <a href="<?= base_url('/profile') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    My Profile
-                </a>
-                <a href="<?= base_url('/payslips') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14h6m-6 4h6m2 2H7a2 2 0 01-2-2V6a2 2 0 012-2h5l5 5v9a2 2 0 01-2 2z" />
-                    </svg>
-                    My Payslips
-                </a>
-            </nav>
-            
-            <!-- User Profile -->
-            <div class="p-4 border-t border-slate-700">
-                <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                        E
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-white truncate" id="user-name">Employee User</p>
-                        <p class="text-xs text-slate-400 truncate" id="user-email">employee@company.com</p>
+
+        <!-- Error Modal -->
+        <div id="error-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="error-modal-title" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl border border-red-500/50 shadow-2xl max-w-md w-full mx-4">
+                <div class="p-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 id="error-modal-title" class="text-xl font-semibold text-white mb-2">Error</h3>
+                            <p id="error-modal-message" class="text-slate-300 whitespace-pre-line"></p>
+                        </div>
                     </div>
                 </div>
-                <button id="logout-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                </button>
+                <div class="bg-slate-900/50 px-6 py-4 flex justify-end">
+                    <button onclick="closeErrorModal()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
+                        Close
+                    </button>
+                </div>
             </div>
-        </aside>
+        </div>
+        
+        <!-- Sidebar -->
+        <?php $currentPage = 'dashboard'; include __DIR__ . '/../layouts/employee_sidebar.php'; ?>
         
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto bg-slate-900">
@@ -564,12 +515,10 @@
             }
         });
 
-        // Update user info in sidebar
+        // Update user info in sidebar (handled by employee_sidebar.php component)
         function updateUserInfo(user) {
-            const initial = user.name ? user.name.charAt(0).toUpperCase() : 'E';
-            document.querySelector('.w-10.h-10').textContent = initial;
-            document.getElementById('user-name').textContent = user.name || 'Employee User';
-            document.getElementById('user-email').textContent = user.email || '';
+            // User info is now automatically loaded by the employee_sidebar.php component
+            // This function is kept for backward compatibility
         }
         
         // Update welcome message
@@ -1189,12 +1138,22 @@
                     closeRequestModal();
                     await loadPendingRequests();
                     await loadLeaveRequests();
+                    await loadLeaveBalance(); // Refresh balance after submission
                 } else {
-                    showError(result.message || 'Failed to submit leave request');
+                    // Handle validation errors (422) and other errors
+                    let errorMessage = result.message || 'Failed to submit leave request';
+                    
+                    // If there are validation errors, show them
+                    if (result.errors && typeof result.errors === 'object') {
+                        const errorMessages = Object.values(result.errors).flat();
+                        errorMessage = errorMessages.join('\n');
+                    }
+                    
+                    showError(errorMessage);
                 }
             } catch (error) {
                 console.error('Submit error:', error);
-                showError('Failed to submit leave request');
+                showError('Failed to submit leave request. Please try again.');
             } finally {
                 hideSubmitLoadingModal();
             }
@@ -1352,12 +1311,15 @@
         }
         
         function hideLoading() {
-            setTimeout(() => {
-                const loading = document.getElementById('page-loading');
-                loading.style.opacity = '0';
-                loading.style.transition = 'opacity 0.3s ease-out';
-                setTimeout(() => loading.style.display = 'none', 300);
-            }, 500);
+            // Check if page-loading exists before trying to hide it
+            const pageLoading = document.getElementById('page-loading');
+            if (pageLoading) {
+                setTimeout(() => {
+                    pageLoading.style.opacity = '0';
+                    pageLoading.style.transition = 'opacity 0.3s ease-out';
+                    setTimeout(() => pageLoading.style.display = 'none', 300);
+                }, 500);
+            }
         }
         
         function showSuccess(message) {
@@ -1365,7 +1327,12 @@
         }
         
         function showError(message) {
-            showToast(message, 'error');
+            document.getElementById('error-modal-message').textContent = message;
+            document.getElementById('error-modal').classList.remove('hidden');
+        }
+        
+        function closeErrorModal() {
+            document.getElementById('error-modal').classList.add('hidden');
         }
         
         function showToast(message, type = 'info') {

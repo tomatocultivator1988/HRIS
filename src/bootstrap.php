@@ -71,6 +71,9 @@ $container->singleton(\Models\EmployeeCompensation::class);
 $container->singleton(\Models\PayrollRun::class);
 $container->singleton(\Models\PayrollLineItem::class);
 $container->singleton(\Models\PayrollAdjustment::class);
+$container->singleton(\Models\JobPosting::class);
+$container->singleton(\Models\Applicant::class);
+$container->singleton(\Models\ApplicantEvaluation::class);
 
 // Register all Services as singletons
 $container->singleton(\Services\AuthService::class);
@@ -82,6 +85,7 @@ $container->singleton(\Services\ReportService::class);
 $container->singleton(\Services\AuditLogService::class);
 $container->singleton(\Services\PayrollService::class);
 $container->singleton(\Services\IdempotencyService::class);
+$container->singleton(\Services\RecruitmentService::class);
 
 // Register all Middleware as singletons
 $container->singleton(\Middleware\AuthMiddleware::class);
@@ -101,5 +105,6 @@ $container->bind(\Controllers\DashboardController::class);
 $container->bind(\Controllers\ReportController::class);
 $container->bind(\Controllers\AnnouncementController::class);
 $container->bind(\Controllers\PayrollController::class);
+$container->bind(\Controllers\RecruitmentController::class);
 
 return $container;

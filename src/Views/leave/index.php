@@ -179,9 +179,33 @@
                 <p class="text-slate-400 mt-2">Please wait</p>
             </div>
         </div>
+
+        <!-- Error Modal -->
+        <div id="error-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[80] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="error-modal-title" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl border border-red-500/50 shadow-2xl max-w-md w-full mx-4">
+                <div class="p-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 id="error-modal-title" class="text-xl font-semibold text-white mb-2">Error</h3>
+                            <p id="error-modal-message" class="text-slate-300 whitespace-pre-line"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/50 px-6 py-4 flex justify-end">
+                    <button onclick="closeErrorModal()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
         
         <!-- Sidebar -->
-        <?php $currentPage = 'leave'; include __DIR__ . '/../layouts/admin_sidebar.php'; ?>
+        <?php $currentPage = 'leave'; include __DIR__ . '/../layouts/dynamic_sidebar.php'; ?>
         
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto bg-slate-900">
@@ -601,14 +625,23 @@
                         loadPendingRequests();
                     }
                 } else {
+                    // Handle validation errors (422) and other errors
+                    let errorMessage = result.message || 'Failed to submit leave request';
+                    
+                    // If there are validation errors, show them
+                    if (result.errors && typeof result.errors === 'object') {
+                        const errorMessages = Object.values(result.errors).flat();
+                        errorMessage = errorMessages.join('\n');
+                    }
+                    
                     openRequestModal();
                     restoreLeaveRequestForm(requestDetails);
-                    showError(result.message || 'Failed to submit leave request');
+                    showError(errorMessage);
                 }
             } catch (error) {
                 openRequestModal();
                 console.error('Submit error:', error);
-                showError('Failed to submit leave request');
+                showError('Failed to submit leave request. Please try again.');
             } finally {
                 hideSubmitLoadingModal();
             }
@@ -1278,7 +1311,12 @@
         }
 
         function showError(message) {
-            showToast(message, 'error');
+            document.getElementById('error-modal-message').textContent = message;
+            document.getElementById('error-modal').classList.remove('hidden');
+        }
+        
+        function closeErrorModal() {
+            document.getElementById('error-modal').classList.add('hidden');
         }
 
         function showToast(message, type = 'info') {

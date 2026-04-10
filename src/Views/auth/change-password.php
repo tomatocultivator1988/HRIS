@@ -200,6 +200,37 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-slate-800 rounded-xl shadow-2xl max-w-md w-full mx-4 border border-slate-700">
+            <div class="p-6">
+                <div class="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-500/20 rounded-full mb-4">
+                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 id="confirm-title" class="text-xl font-bold text-white text-center mb-2"></h3>
+                <p id="confirm-message" class="text-slate-300 text-center mb-6"></p>
+            </div>
+            <div class="bg-slate-700 px-6 py-4 flex space-x-3 rounded-b-xl">
+                <button onclick="closeConfirmModal()" class="flex-1 px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-all">
+                    Cancel
+                </button>
+                <button id="confirm-action-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center border border-slate-700">
+            <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
+            <p id="loading-message" class="text-white text-lg font-semibold">Processing...</p>
+        </div>
+    </div>
+
     <script src="<?= base_url('/assets/js/config.js') ?>"></script>
     <script src="<?= base_url('/assets/js/auth.js') ?>"></script>
     <script>
@@ -270,49 +301,58 @@
                 return;
             }
 
-            // Disable submit button
-            submitBtn.disabled = true;
-            submitText.innerHTML = '<svg class="animate-spin h-5 w-5 text-white inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Changing Password...';
-
-            try {
-                const token = localStorage.getItem('hris_token');
-                
-                if (!token) {
-                    console.error('No authentication token found');
-                    showAlert('Authentication required. Please log in again.', 'danger');
-                    submitBtn.disabled = false;
-                    submitText.innerHTML = 'Change Password';
-                    setTimeout(() => {
-                        window.location.href = window.AppConfig ? window.AppConfig.url('login') : '/HRIS/login';
-                    }, 2000);
-                    return;
-                }
-                
-                const apiUrl = window.AppConfig ? window.AppConfig.apiUrl('password/change') : '/HRIS/api/password/change';
-                console.log('Calling API:', apiUrl);
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword,
-                        confirm_password: confirmPassword
-                    })
-                });
-
-                const data = await response.json();
-                console.log('API Response:', data);
-
-                if (data.success) {
-                    showAlert('Password changed successfully! Logging you in with new credentials...', 'success');
+            // Show confirmation modal
+            showConfirm(
+                'Change Password?',
+                'Are you sure you want to change your password? You will need to use the new password for future logins.',
+                async function() {
+                    // Disable submit button
+                    submitBtn.disabled = true;
+                    submitText.innerHTML = '<svg class="animate-spin h-5 w-5 text-white inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Changing Password...';
                     
-                    // Get current user email before clearing session
-                    const currentUser = JSON.parse(localStorage.getItem('hris_user') || '{}');
-                    const userEmail = currentUser.email;
+                    showLoading('Changing password...');
+
+                    try {
+                        const token = localStorage.getItem('hris_token');
+                        
+                        if (!token) {
+                            console.error('No authentication token found');
+                            hideLoading();
+                            showAlert('Authentication required. Please log in again.', 'danger');
+                            submitBtn.disabled = false;
+                            submitText.innerHTML = 'Change Password';
+                            setTimeout(() => {
+                                window.location.href = window.AppConfig ? window.AppConfig.url('login') : '/HRIS/login';
+                            }, 2000);
+                            return;
+                        }
+                        
+                        const apiUrl = window.AppConfig ? window.AppConfig.apiUrl('password/change') : '/HRIS/api/password/change';
+                        console.log('Calling API:', apiUrl);
+                        
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                current_password: currentPassword,
+                                new_password: newPassword,
+                                confirm_password: confirmPassword
+                            })
+                        });
+
+                        const data = await response.json();
+                        console.log('API Response:', data);
+                        hideLoading();
+
+                        if (data.success) {
+                            showAlert('Password changed successfully! Logging you in with new credentials...', 'success');
+                            
+                            // Get current user email before clearing session
+                            const currentUser = JSON.parse(localStorage.getItem('hris_user') || '{}');
+                            const userEmail = currentUser.email;
                     
                     // Clear session to force fresh token
                     localStorage.removeItem('hris_token');
@@ -415,6 +455,37 @@
                 });
             }
         })();
+        
+        // Confirmation modal functions
+        let confirmCallback = null;
+        
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+        
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmCallback = null;
+        }
+        
+        document.getElementById('confirm-action-btn').addEventListener('click', function() {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        });
+        
+        function showLoading(message = 'Processing...') {
+            document.getElementById('loading-message').textContent = message;
+            document.getElementById('loading-modal').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading-modal').classList.add('hidden');
+        }
         
         // Focus first input on page load
         document.getElementById('currentPassword').focus();

@@ -106,6 +106,9 @@ return function (Router $router) {
     $router->addRoute('GET', '/payroll/manage', 'PayrollController@manageView', ['logging']);
     $router->addRoute('GET', '/payslips', 'PayrollController@payslipsView', ['logging']);
     
+    // Recruitment web route
+    $router->addRoute('GET', '/recruitment', 'RecruitmentController@indexView', ['logging']);
+    
     // Profile web route
     $router->addRoute('GET', '/profile', 'EmployeeController@profileView', ['logging']);
     
@@ -188,6 +191,26 @@ return function (Router $router) {
     $router->addRoute('GET', '/api/reports/attendance', 'ReportController@attendance', ['logging', 'auth', 'role:admin']);
     $router->addRoute('GET', '/api/reports/leave', 'ReportController@leave', ['logging', 'auth', 'role:admin']);
     $router->addRoute('GET', '/api/reports/headcount', 'ReportController@headcount', ['logging', 'auth', 'role:admin']);
+    
+    // Recruitment API routes
+    // Job Postings
+    $router->addRoute('GET', '/api/recruitment/jobs', 'RecruitmentController@listJobs', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/recruitment/jobs/{id}', 'RecruitmentController@getJob', ['logging', 'auth']);
+    $router->addRoute('POST', '/api/recruitment/jobs', 'RecruitmentController@createJob', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/recruitment/jobs/{id}', 'RecruitmentController@updateJob', ['logging', 'auth', 'role:admin']);
+    
+    // Applicants
+    $router->addRoute('GET', '/api/recruitment/applicants', 'RecruitmentController@listApplicants', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/recruitment/applicants/{id}', 'RecruitmentController@getApplicant', ['logging', 'auth']);
+    $router->addRoute('POST', '/api/recruitment/applicants', 'RecruitmentController@createApplicant', ['logging', 'auth', 'role:admin']);
+    $router->addRoute('PUT', '/api/recruitment/applicants/{id}', 'RecruitmentController@updateApplicant', ['logging', 'auth', 'role:admin']);
+    
+    // Evaluations
+    $router->addRoute('GET', '/api/recruitment/applicants/{id}/evaluations', 'RecruitmentController@getEvaluations', ['logging', 'auth']);
+    $router->addRoute('POST', '/api/recruitment/evaluations', 'RecruitmentController@saveEvaluation', ['logging', 'auth', 'role:admin']);
+    
+    // Hiring
+    $router->addRoute('POST', '/api/recruitment/applicants/{id}/hire', 'RecruitmentController@hireApplicant', ['logging', 'auth', 'role:admin']);
     
     // Announcements API routes
     $router->addRoute('GET', '/api/announcements', 'AnnouncementController@index', ['logging', 'auth']);

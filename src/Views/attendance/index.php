@@ -18,6 +18,66 @@
         <!-- Toast Notification Container -->
         <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
         
+        <!-- Time In/Out Modal -->
+        <div id="attendance-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl shadow-2xl max-w-md w-full mx-4">
+                <div id="modal-header" class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 id="modal-title" class="text-xl font-bold text-white">Time In</h3>
+                    </div>
+                    <button onclick="closeAttendanceModal()" class="text-white hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <div id="modal-current-time" class="text-4xl font-bold text-white mb-2">--:--:--</div>
+                        <div id="modal-current-date" class="text-slate-400">--</div>
+                    </div>
+                    <div id="modal-message" class="text-center text-slate-300 mb-6">
+                        Are you sure you want to record your time in?
+                    </div>
+                </div>
+                <div class="bg-slate-700 px-6 py-4 flex justify-end space-x-3">
+                    <button onclick="closeAttendanceModal()" class="px-6 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-all">
+                        Cancel
+                    </button>
+                    <button id="confirm-attendance-btn" class="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error Modal -->
+        <div id="error-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[80] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="error-modal-title" aria-hidden="true" tabindex="-1">
+            <div class="bg-slate-800 rounded-xl border border-red-500/50 shadow-2xl max-w-md w-full mx-4">
+                <div class="p-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 id="error-modal-title" class="text-xl font-semibold text-white mb-2">Error</h3>
+                            <p id="error-modal-message" class="text-slate-300 whitespace-pre-line"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-900/50 px-6 py-4 flex justify-end">
+                    <button onclick="closeErrorModal()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Confirmation Modal -->
         <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[60] flex items-center justify-center p-4">
             <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl max-w-md w-full p-6">
@@ -110,7 +170,7 @@
         </div>
         
         <!-- Sidebar -->
-        <?php $currentPage = 'attendance'; include __DIR__ . '/../layouts/admin_sidebar.php'; ?>
+        <?php $currentPage = 'attendance'; include __DIR__ . '/../layouts/dynamic_sidebar.php'; ?>
         
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto bg-slate-900">
@@ -410,80 +470,14 @@
             }
         }
 
-        // Time In
-        document.getElementById('time-in-btn')?.addEventListener('click', async function() {
-            try {
-                const btn = this;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>Processing...';
-                
-                const response = await fetch(AppConfig.getApiUrl('/attendance/timein'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getAccessToken()}`
-                    },
-                    body: JSON.stringify({
-                        date: currentDate,
-                        time_in: getPhilippinesTime()
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showSuccess('Time-in recorded successfully!');
-                    localStorage.setItem(attendanceSyncKey, String(Date.now()));
-                    loadMyAttendance();
-                } else {
-                    showError(result.message || 'Failed to record time-in');
-                }
-            } catch (error) {
-                console.error('Time-in error:', error);
-                showError('Failed to record time-in');
-            } finally {
-                const btn = document.getElementById('time-in-btn');
-                btn.disabled = false;
-                btn.innerHTML = '<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span class="font-semibold">Time In</span>';
-            }
+        // Time In - Open modal instead of direct recording
+        document.getElementById('time-in-btn')?.addEventListener('click', function() {
+            openAttendanceModal('timein');
         });
 
-        // Time Out
-        document.getElementById('time-out-btn')?.addEventListener('click', async function() {
-            try {
-                const btn = this;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>Processing...';
-                
-                const response = await fetch(AppConfig.getApiUrl('/attendance/timeout'), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getAccessToken()}`
-                    },
-                    body: JSON.stringify({
-                        date: currentDate,
-                        time_out: getPhilippinesTime()
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showSuccess('Time-out recorded successfully!');
-                    localStorage.setItem(attendanceSyncKey, String(Date.now()));
-                    loadMyAttendance();
-                } else {
-                    showError(result.message || 'Failed to record time-out');
-                }
-            } catch (error) {
-                console.error('Time-out error:', error);
-                showError('Failed to record time-out');
-            } finally {
-                const btn = document.getElementById('time-out-btn');
-                btn.disabled = false;
-                btn.innerHTML = '<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span class="font-semibold">Time Out</span>';
-            }
+        // Time Out - Open modal instead of direct recording
+        document.getElementById('time-out-btn')?.addEventListener('click', function() {
+            openAttendanceModal('timeout');
         });
 
         // Load my attendance (employee)
@@ -1224,6 +1218,134 @@
         function getAccessToken() {
             // Check both possible localStorage keys
             return localStorage.getItem('access_token') || localStorage.getItem('hris_token');
+        }
+
+        // Attendance Modal Functions
+        let attendanceAction = null; // 'timein' or 'timeout'
+        let modalClockInterval = null;
+
+        function openAttendanceModal(action) {
+            attendanceAction = action;
+            const modal = document.getElementById('attendance-modal');
+            const modalHeader = document.getElementById('modal-header');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const confirmBtn = document.getElementById('confirm-attendance-btn');
+
+            // Update modal based on action
+            if (action === 'timein') {
+                modalHeader.className = 'bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between';
+                modalTitle.textContent = 'Time In';
+                modalMessage.textContent = 'Are you sure you want to record your time in?';
+                confirmBtn.className = 'px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all';
+            } else {
+                modalHeader.className = 'bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center justify-between';
+                modalTitle.textContent = 'Time Out';
+                modalMessage.textContent = 'Are you sure you want to record your time out?';
+                confirmBtn.className = 'px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg transition-all';
+            }
+
+            // Update time display
+            updateModalTime();
+            modalClockInterval = setInterval(updateModalTime, 1000);
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeAttendanceModal() {
+            const modal = document.getElementById('attendance-modal');
+            modal.classList.add('hidden');
+            if (modalClockInterval) {
+                clearInterval(modalClockInterval);
+                modalClockInterval = null;
+            }
+        }
+
+        function updateModalTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            
+            document.getElementById('modal-current-time').textContent = timeStr;
+            document.getElementById('modal-current-date').textContent = dateStr;
+        }
+
+        // Confirm attendance button handler
+        document.getElementById('confirm-attendance-btn')?.addEventListener('click', async function() {
+            if (attendanceAction === 'timein') {
+                await performTimeIn();
+            } else if (attendanceAction === 'timeout') {
+                await performTimeOut();
+            }
+            closeAttendanceModal();
+        });
+
+        async function performTimeIn() {
+            try {
+                const response = await fetch(AppConfig.getApiUrl('/attendance/timein'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAccessToken()}`
+                    },
+                    body: JSON.stringify({
+                        date: currentDate,
+                        time_in: getPhilippinesTime()
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Time-in recorded successfully!');
+                    localStorage.setItem(attendanceSyncKey, String(Date.now()));
+                    loadMyAttendance();
+                } else {
+                    showError(result.message || 'Failed to record time-in');
+                }
+            } catch (error) {
+                console.error('Time-in error:', error);
+                showError('Failed to record time-in');
+            }
+        }
+
+        async function performTimeOut() {
+            try {
+                const response = await fetch(AppConfig.getApiUrl('/attendance/timeout'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAccessToken()}`
+                    },
+                    body: JSON.stringify({
+                        date: currentDate,
+                        time_out: getPhilippinesTime()
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Time-out recorded successfully!');
+                    localStorage.setItem(attendanceSyncKey, String(Date.now()));
+                    loadMyAttendance();
+                } else {
+                    showError(result.message || 'Failed to record time-out');
+                }
+            } catch (error) {
+                console.error('Time-out error:', error);
+                showError('Failed to record time-out');
+            }
+        }
+
+        // Error Modal Functions
+        function showError(message) {
+            document.getElementById('error-modal-message').textContent = message;
+            document.getElementById('error-modal').classList.remove('hidden');
+        }
+
+        function closeErrorModal() {
+            document.getElementById('error-modal').classList.add('hidden');
         }
     </script>
 </body>

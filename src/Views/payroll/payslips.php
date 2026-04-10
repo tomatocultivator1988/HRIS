@@ -9,22 +9,8 @@
 </head>
 <body class="h-full bg-slate-900 overflow-hidden">
     <div class="flex h-full bg-slate-900">
-        <aside class="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
-            <div class="p-6 border-b border-slate-700">
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">HRIS MVP</h1>
-                <p class="text-xs text-slate-400 mt-1">Human Resources System</p>
-            </div>
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <a href="<?= base_url('/dashboard/employee') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">Dashboard</a>
-                <a href="<?= base_url('/attendance') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">My Attendance</a>
-                <a href="<?= base_url('/leave') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">Leave Requests</a>
-                <a href="<?= base_url('/profile') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">My Profile</a>
-                <a href="<?= base_url('/payslips') ?>" class="flex items-center px-4 py-3 text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg shadow-blue-900/50">My Payslips</a>
-            </nav>
-            <div class="p-4 border-t border-slate-700">
-                <button id="logout-btn" class="w-full px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">Logout</button>
-            </div>
-        </aside>
+        <!-- Sidebar -->
+        <?php $currentPage = 'payslips'; include __DIR__ . '/../layouts/employee_sidebar.php'; ?>
 
         <main class="flex-1 overflow-y-auto bg-slate-900 p-8 space-y-6">
             <header>

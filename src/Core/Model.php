@@ -116,6 +116,8 @@ abstract class Model
             if (empty($result) || !isset($result['id'])) {
                 error_log('Model::create - Insert returned empty or no ID, attempting to fetch created record');
                 error_log('Insert result: ' . json_encode($result));
+                error_log('Table: ' . $this->table);
+                error_log('Data attempted: ' . json_encode($data));
                 
                 // Try to find the record we just created using unique fields
                 // This is a workaround for Supabase not returning the created record
@@ -130,15 +132,32 @@ abstract class Model
                         error_log('Found created record: ' . json_encode($records[0]));
                         return $this->castAttributes($records[0]);
                     }
+                } elseif (!empty($data['applicant_id']) && !empty($data['stage_name'])) {
+                    // For applicant evaluations, try to find by applicant_id and stage_name
+                    error_log('Attempting to fetch evaluation by applicant_id and stage_name');
+                    $records = $this->where([
+                        'applicant_id' => $data['applicant_id'],
+                        'stage_name' => $data['stage_name']
+                    ])->orderBy('created_at', 'DESC')->limit(1)->get();
+                    
+                    error_log('Fetch result: ' . json_encode($records));
+                    
+                    if (!empty($records)) {
+                        error_log('Found created evaluation record: ' . json_encode($records[0]));
+                        return $this->castAttributes($records[0]);
+                    } else {
+                        error_log('ERROR: Could not find the evaluation that was supposedly created!');
+                        throw new DatabaseException('Failed to create record - insert succeeded but record not found in database');
+                    }
                 }
                 
-                error_log('Could not fetch created record, returning data with generated ID');
-                // Last resort: return the data we tried to insert
-                // Note: This won't have the actual database ID
-                return $this->castAttributes($data);
+                error_log('ERROR: Could not fetch created record, no unique fields to search by');
+                throw new DatabaseException('Failed to create record - insert returned empty result');
             }
             
             return $this->castAttributes($result);
+        } catch (DatabaseException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->handleDatabaseError($e, 'create', ['data' => $data]);
             throw new DatabaseException("Failed to create record: " . $e->getMessage());

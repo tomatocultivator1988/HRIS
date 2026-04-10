@@ -231,6 +231,37 @@ $departments = $departments ?? [];
     <?php endif; ?>
 </div>
 
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-100 rounded-full mb-4">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 id="confirm-title" class="text-xl font-bold text-gray-900 text-center mb-2"></h3>
+            <p id="confirm-message" class="text-gray-600 text-center mb-6"></p>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 flex space-x-3 rounded-b-xl">
+            <button onclick="closeConfirmModal()" class="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg transition-all">
+                Cancel
+            </button>
+            <button id="confirm-action-btn" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
+        <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+        <p id="loading-message" class="text-gray-700 text-lg font-semibold">Processing...</p>
+    </div>
+</div>
+
 <!-- Employee Creation/Edit Modal -->
 <div id="employeeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
     <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
@@ -433,30 +464,43 @@ $departments = $departments ?? [];
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
             
-            try {
-                this.showFormLoading();
-                
-                let response;
-                if (this.isEditing) {
-                    response = await window.API.put(`employees/${this.editingEmployeeId}`, data);
-                } else {
-                    response = await window.API.post('employees', data);
+            const actionText = this.isEditing ? 'update' : 'create';
+            const employeeName = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'this employee';
+            
+            showConfirm(
+                this.isEditing ? 'Update Employee?' : 'Create Employee?',
+                `Are you sure you want to ${actionText} ${employeeName}?`,
+                async () => {
+                    try {
+                        this.showFormLoading();
+                        showLoading(this.isEditing ? 'Updating employee...' : 'Creating employee...');
+                        
+                        let response;
+                        if (this.isEditing) {
+                            response = await window.API.put(`employees/${this.editingEmployeeId}`, data);
+                        } else {
+                            response = await window.API.post('employees', data);
+                        }
+                        
+                        hideLoading();
+                        
+                        if (response.success) {
+                            this.showSuccess(this.isEditing ? 'Employee updated successfully' : 'Employee created successfully');
+                            this.closeModal();
+                            window.location.reload(); // Refresh the page to show updated data
+                        } else {
+                            this.handleFormErrors(response.errors || {});
+                            this.showError(response.message || 'Failed to save employee');
+                        }
+                    } catch (error) {
+                        hideLoading();
+                        console.error('Error saving employee:', error);
+                        this.showError('Failed to save employee. Please try again.');
+                    } finally {
+                        this.hideFormLoading();
+                    }
                 }
-                
-                if (response.success) {
-                    this.showSuccess(this.isEditing ? 'Employee updated successfully' : 'Employee created successfully');
-                    this.closeModal();
-                    window.location.reload(); // Refresh the page to show updated data
-                } else {
-                    this.handleFormErrors(response.errors || {});
-                    this.showError(response.message || 'Failed to save employee');
-                }
-            } catch (error) {
-                console.error('Error saving employee:', error);
-                this.showError('Failed to save employee. Please try again.');
-            } finally {
-                this.hideFormLoading();
-            }
+            );
         }
         
         handleFilterSubmit(e) {
@@ -520,45 +564,88 @@ $departments = $departments ?? [];
         }
     }
     
+    // Confirmation modal functions
+    let confirmCallback = null;
+    
+    function showConfirm(title, message, callback) {
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-message').textContent = message;
+        confirmCallback = callback;
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+    
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        confirmCallback = null;
+    }
+    
+    document.getElementById('confirm-action-btn').addEventListener('click', function() {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        closeConfirmModal();
+    });
+    
+    function showLoading(message = 'Processing...') {
+        document.getElementById('loading-message').textContent = message;
+        document.getElementById('loading-modal').classList.remove('hidden');
+    }
+    
+    function hideLoading() {
+        document.getElementById('loading-modal').classList.add('hidden');
+    }
+    
     // Global functions for action buttons
     async function deactivateEmployee(employeeId) {
-        if (!confirm('Are you sure you want to deactivate this employee?')) {
-            return;
-        }
-        
-        try {
-            const response = await window.API.delete(`employees/${employeeId}`);
-            
-            if (response.success) {
-                alert('Employee deactivated successfully');
-                window.location.reload();
-            } else {
-                alert('Failed to deactivate employee: ' + response.message);
+        showConfirm(
+            'Deactivate Employee?',
+            'Are you sure you want to deactivate this employee?',
+            async function() {
+                showLoading('Deactivating employee...');
+                
+                try {
+                    const response = await window.API.delete(`employees/${employeeId}`);
+                    hideLoading();
+                    
+                    if (response.success) {
+                        alert('Employee deactivated successfully');
+                        window.location.reload();
+                    } else {
+                        alert('Failed to deactivate employee: ' + response.message);
+                    }
+                } catch (error) {
+                    hideLoading();
+                    console.error('Error deactivating employee:', error);
+                    alert('Failed to deactivate employee. Please try again.');
+                }
             }
-        } catch (error) {
-            console.error('Error deactivating employee:', error);
-            alert('Failed to deactivate employee. Please try again.');
-        }
+        );
     }
     
     async function activateEmployee(employeeId) {
-        if (!confirm('Are you sure you want to activate this employee?')) {
-            return;
-        }
-        
-        try {
-            const response = await window.API.put(`employees/${employeeId}`, { is_active: true });
-            
-            if (response.success) {
-                alert('Employee activated successfully');
-                window.location.reload();
-            } else {
-                alert('Failed to activate employee: ' + response.message);
+        showConfirm(
+            'Activate Employee?',
+            'Are you sure you want to activate this employee?',
+            async function() {
+                showLoading('Activating employee...');
+                
+                try {
+                    const response = await window.API.put(`employees/${employeeId}`, { is_active: true });
+                    hideLoading();
+                    
+                    if (response.success) {
+                        alert('Employee activated successfully');
+                        window.location.reload();
+                    } else {
+                        alert('Failed to activate employee: ' + response.message);
+                    }
+                } catch (error) {
+                    hideLoading();
+                    console.error('Error activating employee:', error);
+                    alert('Failed to activate employee. Please try again.');
+                }
             }
-        } catch (error) {
-            console.error('Error activating employee:', error);
-            alert('Failed to activate employee. Please try again.');
-        }
+        );
     }
     
     // Initialize employee manager

@@ -98,6 +98,14 @@ class LeaveService
                 ]);
             }
             
+            // Validate leave credits - check if employee has enough credits
+            $this->validateLeaveCredits(
+                $requestData['employee_id'],
+                $leaveTypeUuid,
+                $totalDays,
+                $requestData['start_date']
+            );
+            
             // Check for overlapping leave requests
             if ($this->leaveRequestModel->hasOverlappingLeave(
                 $requestData['employee_id'],
@@ -593,31 +601,119 @@ class LeaveService
     public function getLeaveBalance(string $employeeId): array
     {
         try {
-            // TODO: Implement leave credits system
-            // For now, return default leave credits in array format
-            return [
-                [
-                    'leave_type' => 'Vacation Leave',
-                    'total_credits' => 15,
-                    'used_credits' => 0,
-                    'remaining_credits' => 15
-                ],
-                [
-                    'leave_type' => 'Sick Leave',
-                    'total_credits' => 15,
-                    'used_credits' => 0,
-                    'remaining_credits' => 15
-                ],
-                [
-                    'leave_type' => 'Emergency Leave',
-                    'total_credits' => 5,
-                    'used_credits' => 0,
-                    'remaining_credits' => 5
-                ]
-            ];
+            // Get database connection using reflection
+            $reflection = new \ReflectionClass($this->leaveRequestModel);
+            $property = $reflection->getProperty('db');
+            $property->setAccessible(true);
+            $db = $property->getValue($this->leaveRequestModel);
+            
+            // Get current year
+            $currentYear = (int) date('Y');
+            
+            // Get leave credits for this employee and year
+            $leaveCredits = $db->select('leave_credits', [
+                'employee_id' => $employeeId,
+                'year' => $currentYear
+            ], [
+                'select' => '*'
+            ]);
+            
+            if (empty($leaveCredits)) {
+                error_log("No leave credits found for employee {$employeeId} for year {$currentYear}");
+                return [];
+            }
+            
+            // Get leave types to map names
+            $leaveTypes = $db->select('leave_types', [], ['select' => '*']);
+            $leaveTypeMap = [];
+            foreach ($leaveTypes as $type) {
+                $leaveTypeMap[$type['id']] = $type['name'];
+            }
+            
+            // Format the response with leave type names
+            $result = [];
+            foreach ($leaveCredits as $credit) {
+                $result[] = [
+                    'leave_type' => $leaveTypeMap[$credit['leave_type_id']] ?? 'Unknown',
+                    'total_credits' => (int) $credit['total_credits'],
+                    'used_credits' => (int) $credit['used_credits'],
+                    'remaining_credits' => (int) $credit['remaining_credits'],
+                    'year' => (int) $credit['year']
+                ];
+            }
+            
+            return $result;
+            
         } catch (Exception $e) {
             error_log('LeaveService::getLeaveBalance Error: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
             throw new Exception('Failed to retrieve leave balance: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Get detailed leave credits for an employee
+     * 
+     * @param string $employeeId Employee ID
+     * @return array Leave credits with type information
+     */
+    public function getLeaveCredits(string $employeeId): array
+    {
+        try {
+            // Get database connection using reflection
+            $reflection = new \ReflectionClass($this->leaveRequestModel);
+            $property = $reflection->getProperty('db');
+            $property->setAccessible(true);
+            $db = $property->getValue($this->leaveRequestModel);
+            
+            // Get current year
+            $currentYear = (int) date('Y');
+            
+            // Get leave credits for this employee and year
+            $leaveCredits = $db->select('leave_credits', [
+                'employee_id' => $employeeId,
+                'year' => $currentYear
+            ], [
+                'select' => '*'
+            ]);
+            
+            if (empty($leaveCredits)) {
+                error_log("No leave credits found for employee {$employeeId} for year {$currentYear}");
+                return [];
+            }
+            
+            // Get leave types to enrich the data
+            $leaveTypes = $db->select('leave_types', [], ['select' => '*']);
+            $leaveTypeMap = [];
+            foreach ($leaveTypes as $type) {
+                $leaveTypeMap[$type['id']] = $type;
+            }
+            
+            // Enrich leave credits with type information
+            $result = [];
+            foreach ($leaveCredits as $credit) {
+                $leaveType = $leaveTypeMap[$credit['leave_type_id']] ?? null;
+                $result[] = [
+                    'id' => $credit['id'],
+                    'employee_id' => $credit['employee_id'],
+                    'leave_type_id' => $credit['leave_type_id'],
+                    'leave_type_name' => $leaveType['name'] ?? 'Unknown',
+                    'leave_type_description' => $leaveType['description'] ?? '',
+                    'total_credits' => (int) $credit['total_credits'],
+                    'used_credits' => (int) $credit['used_credits'],
+                    'remaining_credits' => (int) $credit['remaining_credits'],
+                    'year' => (int) $credit['year'],
+                    'created_at' => $credit['created_at'],
+                    'updated_at' => $credit['updated_at']
+                ];
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            error_log('LeaveService::getLeaveCredits Error: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            throw new Exception('Failed to retrieve leave credits: ' . $e->getMessage());
         }
     }
     
@@ -675,6 +771,81 @@ class LeaveService
         } catch (Exception $e) {
             error_log('LeaveService::getLeaveTypes Error: ' . $e->getMessage());
             throw new Exception('Failed to retrieve leave types: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Validate if employee has sufficient leave credits
+     *
+     * @param string $employeeId Employee ID
+     * @param string $leaveTypeId Leave type UUID
+     * @param float $daysRequested Number of days requested
+     * @param string $startDate Start date of leave
+     * @throws ValidationException If insufficient credits
+     */
+    private function validateLeaveCredits(string $employeeId, string $leaveTypeId, float $daysRequested, string $startDate): void
+    {
+        try {
+            // Get database connection using reflection
+            $reflection = new \ReflectionClass($this->leaveRequestModel);
+            $property = $reflection->getProperty('db');
+            $property->setAccessible(true);
+            $db = $property->getValue($this->leaveRequestModel);
+            
+            // Get the year from start date
+            $year = (int) date('Y', strtotime($startDate));
+            
+            error_log('validateLeaveCredits - Employee: ' . $employeeId . ', LeaveType: ' . $leaveTypeId . ', Year: ' . $year);
+            
+            // Get leave credits for this employee, leave type, and year
+            $leaveCredits = $db->select('leave_credits', [
+                'employee_id' => $employeeId,
+                'leave_type_id' => $leaveTypeId,
+                'year' => $year
+            ]);
+            
+            error_log('validateLeaveCredits - Result: ' . json_encode($leaveCredits));
+            
+            // If no leave credits record found, employee cannot file leave
+            if (empty($leaveCredits)) {
+                throw new ValidationException('Leave credits not initialized for this employee', [
+                    'leave_credits' => 'Leave credits not found. Please contact HR to initialize your leave credits.'
+                ]);
+            }
+            
+            $credits = $leaveCredits[0];
+            
+            // Get leave type name
+            $leaveType = $db->find('leave_types', $leaveTypeId);
+            $leaveTypeName = $leaveType['name'] ?? 'Leave';
+            
+            $remainingCredits = (float) $credits['remaining_credits'];
+            
+            error_log("validateLeaveCredits - Remaining: {$remainingCredits}, Requested: {$daysRequested}");
+            
+            // Check if employee has enough remaining credits
+            if ($remainingCredits < $daysRequested) {
+                throw new ValidationException('Insufficient leave credits', [
+                    'leave_credits' => sprintf(
+                        'Insufficient %s credits. You have %.1f days remaining but requested %.1f days.',
+                        $leaveTypeName,
+                        $remainingCredits,
+                        $daysRequested
+                    )
+                ]);
+            }
+            
+            error_log('validateLeaveCredits - Validation passed');
+            
+        } catch (ValidationException $e) {
+            // Re-throw validation exceptions
+            throw $e;
+        } catch (Exception $e) {
+            error_log('LeaveService::validateLeaveCredits Error: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            // Don't block leave request if validation check fails due to technical error
+            // Just log the error and continue
+            error_log('WARNING: Leave credits validation failed due to technical error, allowing request to proceed');
         }
     }
     

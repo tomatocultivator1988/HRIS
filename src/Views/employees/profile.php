@@ -9,15 +9,6 @@
     <link rel="stylesheet" href="<?= base_url('/assets/css/loading-skeletons.css') ?>">
 </head>
 <body class="h-full bg-slate-900 overflow-hidden">
-    <!-- Loading Screen -->
-    <div id="page-loading" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
-        <div class="text-center">
-            <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
-            <h2 class="text-2xl font-semibold text-white">Loading Profile...</h2>
-            <p class="text-slate-400 mt-2">Please wait</p>
-        </div>
-    </div>
-
     <!-- Main Container -->
     <div class="flex h-full bg-slate-900">
         
@@ -84,80 +75,39 @@
             </div>
         </div>
         
-        <!-- Sidebar -->
-        <aside class="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
-            <!-- Logo -->
-            <div class="p-6 border-b border-slate-700">
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                    HRIS MVP
-                </h1>
-                <p class="text-xs text-slate-400 mt-1">Human Resources System</p>
-            </div>
-            
-            <!-- Navigation -->
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <a href="<?= base_url('/dashboard/admin') ?>" id="dashboard-link" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    Dashboard
-                </a>
-                
-                <a href="<?= base_url('/employees') ?>" id="employees-link" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all hidden">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Employees
-                </a>
-                
-                <a href="<?= base_url('/attendance') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                    <span id="attendance-text">Attendance</span>
-                </a>
-                
-                <a href="<?= base_url('/leave') ?>" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Leave Requests
-                </a>
-                
-                <a href="<?= base_url('/reports') ?>" id="reports-link" class="flex items-center px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all hidden">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Reports
-                </a>
-                
-                <a href="<?= base_url('/profile') ?>" id="profile-link" class="flex items-center px-4 py-3 text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg shadow-blue-900/50">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    My Profile
-                </a>
-            </nav>
-            
-            <!-- User Profile -->
-            <div class="p-4 border-t border-slate-700">
-                <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                        E
+        <!-- Confirmation Modal -->
+        <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-slate-800 rounded-xl shadow-2xl max-w-md w-full mx-4 border border-slate-700">
+                <div class="p-6">
+                    <div class="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-500/20 rounded-full mb-4">
+                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-white truncate" id="user-name">Employee User</p>
-                        <p class="text-xs text-slate-400 truncate" id="user-email">employee@company.com</p>
-                    </div>
+                    <h3 id="confirm-title" class="text-xl font-bold text-white text-center mb-2"></h3>
+                    <p id="confirm-message" class="text-slate-300 text-center mb-6"></p>
                 </div>
-                <button id="logout-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-all">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                </button>
+                <div class="bg-slate-700 px-6 py-4 flex space-x-3 rounded-b-xl">
+                    <button onclick="closeConfirmModal()" class="flex-1 px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-all">
+                        Cancel
+                    </button>
+                    <button id="confirm-action-btn" class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all">
+                        Confirm
+                    </button>
+                </div>
             </div>
-        </aside>
+        </div>
+        
+        <!-- Loading Modal -->
+        <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center border border-slate-700">
+                <div class="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
+                <p id="loading-message" class="text-white text-lg font-semibold">Processing...</p>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <?php $currentPage = 'profile'; include __DIR__ . '/../layouts/employee_sidebar.php'; ?>
         
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto bg-slate-900">
@@ -380,29 +330,10 @@
             document.getElementById('user-email').textContent = user.email || '';
         }
         
-        // Update navigation based on role
+        // Update navigation based on role (handled by employee_sidebar.php component)
         function updateNavigationForRole(role) {
-            const dashboardLink = document.getElementById('dashboard-link');
-            const employeesLink = document.getElementById('employees-link');
-            const reportsLink = document.getElementById('reports-link');
-            const profileLink = document.getElementById('profile-link');
-            const attendanceText = document.getElementById('attendance-text');
-            
-            if (role === 'admin') {
-                // Admin navigation
-                dashboardLink.href = '<?= base_url('/dashboard/admin') ?>';
-                employeesLink.classList.remove('hidden');
-                reportsLink.classList.remove('hidden');
-                profileLink.classList.add('hidden');
-                if (attendanceText) attendanceText.textContent = 'Attendance';
-            } else {
-                // Employee navigation
-                dashboardLink.href = '<?= base_url('/dashboard/employee') ?>';
-                employeesLink.classList.add('hidden');
-                reportsLink.classList.add('hidden');
-                profileLink.classList.remove('hidden');
-                if (attendanceText) attendanceText.textContent = 'My Attendance';
-            }
+            // Navigation is now automatically handled by the employee_sidebar.php component
+            // This function is kept for backward compatibility but does nothing
         }
         
         // Load employee profile data
@@ -532,39 +463,89 @@
         
         // Save profile changes
         async function saveProfile() {
-            // Show confirmation before saving
-            if (!confirm('Are you sure you want to save these changes?')) {
-                return;
+            showConfirm(
+                'Save Profile Changes?',
+                'Are you sure you want to save these changes to your profile?',
+                async function() {
+                    showLoading('Saving profile...');
+                    
+                    try {
+                        const formData = {
+                            mobile_number: document.getElementById('edit-phone').value,
+                            address: document.getElementById('edit-address').value,
+                            emergency_contact: document.getElementById('edit-emergency-contact').value
+                        };
+                        
+                        const response = await fetch(AppConfig.getApiUrl('/employees/profile'), {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${getAccessToken()}`
+                            },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const result = await response.json();
+                        hideLoading();
+                        
+                        if (result.success) {
+                            showSuccess('Profile updated successfully!');
+                            closeEditModal();
+                            await loadEmployeeProfile(); // Reload profile data
+                        } else {
+                            showError(result.message || 'Failed to update profile');
+                        }
+                    } catch (error) {
+                        hideLoading();
+                        console.error('Save profile error:', error);
+                        showError('Failed to update profile');
+                    }
+                }
+            );
+        }
+        
+        // Confirmation modal functions
+        let confirmCallback = null;
+        
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            confirmCallback = callback;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+        
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmCallback = null;
+        }
+        
+        document.getElementById('confirm-action-btn').addEventListener('click', function() {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            closeConfirmModal();
+        });
+        
+        function showLoading(message = 'Processing...') {
+            document.getElementById('loading-message').textContent = message;
+            document.getElementById('loading-modal').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            // Check if loading modal exists before trying to hide it
+            const loadingModal = document.getElementById('loading-modal');
+            if (loadingModal) {
+                loadingModal.classList.add('hidden');
             }
             
-            try {
-                const formData = {
-                    mobile_number: document.getElementById('edit-phone').value,
-                    address: document.getElementById('edit-address').value,
-                    emergency_contact: document.getElementById('edit-emergency-contact').value
-                };
-                
-                const response = await fetch(AppConfig.getApiUrl('/employees/profile'), {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getAccessToken()}`
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showSuccess('Profile updated successfully!');
-                    closeEditModal();
-                    await loadEmployeeProfile(); // Reload profile data
-                } else {
-                    showError(result.message || 'Failed to update profile');
-                }
-            } catch (error) {
-                console.error('Save profile error:', error);
-                showError('Failed to update profile');
+            // Check if page-loading exists (old full-screen loading)
+            const pageLoading = document.getElementById('page-loading');
+            if (pageLoading) {
+                setTimeout(() => {
+                    pageLoading.style.opacity = '0';
+                    pageLoading.style.transition = 'opacity 0.3s ease-out';
+                    setTimeout(() => pageLoading.style.display = 'none', 300);
+                }, 500);
             }
         }
         
@@ -590,15 +571,6 @@
             }
 
             fieldElement.textContent = ProfileUtils.hasDisplayValue(formattedValue) ? formattedValue : String(value).trim();
-        }
-        
-        function hideLoading() {
-            setTimeout(() => {
-                const loading = document.getElementById('page-loading');
-                loading.style.opacity = '0';
-                loading.style.transition = 'opacity 0.3s ease-out';
-                setTimeout(() => loading.style.display = 'none', 300);
-            }, 500);
         }
         
         function showSuccess(message) {
