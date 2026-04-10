@@ -189,6 +189,8 @@
     </div>
 
     <script src="<?= base_url('/assets/js/config.js') ?>"></script>
+    <script src="<?= base_url('/assets/js/auth.js') ?>"></script>
+    <script src="<?= base_url('/assets/js/token-manager.js') ?>"></script>
     <script>
         const token = localStorage.getItem('hris_token');
         if (!token) {
@@ -267,10 +269,14 @@
         // Step 1: Create Period
         document.getElementById('create-period-btn').addEventListener('click', async () => {
             hideError();
+            
+            // Get values and log for debugging
             const code = document.getElementById('period-code').value.trim();
             const start = document.getElementById('period-start').value;
             const end = document.getElementById('period-end').value;
             const payDate = document.getElementById('period-pay-date').value;
+            
+            console.log('Validation check:', { code, start, end, payDate });
 
             if (!code || !start || !end || !payDate) {
                 showError('Please fill in all fields:\n- Period Code\n- Period Start\n- Period End\n- Pay Date');
