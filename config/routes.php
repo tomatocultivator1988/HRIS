@@ -134,6 +134,13 @@ return function (Router $router) {
     $router->addRoute('PUT', '/api/employees/{id}', 'EmployeeController@apiUpdate', ['logging', 'auth', 'role:admin']);
     $router->addRoute('DELETE', '/api/employees/{id}', 'EmployeeController@apiDelete', ['logging', 'auth', 'role:admin']);
     
+    // Employee 201 Files API routes
+    $router->addRoute('POST', '/api/employees/{employeeId}/documents', 'DocumentController@upload', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/employees/{employeeId}/documents', 'DocumentController@list', ['logging', 'auth']);
+    $router->addRoute('GET', '/api/employees/{employeeId}/documents/{documentId}/download', 'DocumentController@download', ['logging', 'auth']);
+    $router->addRoute('DELETE', '/api/employees/{employeeId}/documents/{documentId}', 'DocumentController@delete', ['logging', 'auth']);
+    $router->addRoute('PUT', '/api/employees/{employeeId}/documents/{documentId}/verify', 'DocumentController@verify', ['logging', 'auth', 'role:admin']);
+    
     // Dashboard API routes
     $router->addRoute('GET', '/api/dashboard/metrics', 'DashboardController@metrics', ['logging', 'auth']);
     

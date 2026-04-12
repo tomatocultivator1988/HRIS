@@ -106,6 +106,102 @@
             </div>
         </div>
         
+        <!-- Upload Document Modal -->
+        <div id="upload-document-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-slate-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 border border-slate-700">
+                <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-white mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <h3 class="text-xl font-bold text-white">Upload Document</h3>
+                    </div>
+                    <button onclick="closeUploadModal()" class="text-white hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <form id="upload-document-form" class="p-6">
+                    <div class="space-y-4">
+                        <!-- Drag and Drop Area -->
+                        <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center hover:border-purple-500 transition-colors cursor-pointer">
+                            <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p class="mt-2 text-sm text-slate-300">
+                                <span class="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p class="text-xs text-slate-500 mt-1">PDF, JPG, PNG, DOC, DOCX (max 10MB)</p>
+                            <input type="file" id="file-input" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="hidden">
+                        </div>
+                        
+                        <!-- Selected File Display -->
+                        <div id="selected-file-display" class="hidden bg-slate-700 rounded-lg p-4 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="w-8 h-8 text-purple-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-white font-medium" id="selected-file-name">filename.pdf</p>
+                                    <p class="text-slate-400 text-sm" id="selected-file-size">1.5 MB</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="clearSelectedFile()" class="text-slate-400 hover:text-white">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Document Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Document Type *</label>
+                            <select id="document-type" name="document_type" required class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500">
+                                <option value="">Select document type</option>
+                                <option value="Resume">Resume</option>
+                                <option value="Birth Certificate">Birth Certificate</option>
+                                <option value="TIN">TIN</option>
+                                <option value="SSS">SSS</option>
+                                <option value="PhilHealth">PhilHealth</option>
+                                <option value="Pag-IBIG">Pag-IBIG</option>
+                                <option value="NBI Clearance">NBI Clearance</option>
+                                <option value="Medical Certificate">Medical Certificate</option>
+                                <option value="Diploma">Diploma</option>
+                                <option value="Transcript">Transcript</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Notes (Optional) -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Notes (Optional)</label>
+                            <textarea id="document-notes" name="notes" rows="3" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500" placeholder="Add any additional notes about this document..."></textarea>
+                        </div>
+                        
+                        <!-- Upload Progress -->
+                        <div id="upload-progress-container" class="hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-slate-300">Uploading...</span>
+                                <span class="text-sm text-slate-300" id="upload-progress-text">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-700 rounded-full h-2">
+                                <div id="upload-progress-bar" class="bg-gradient-to-r from-purple-600 to-purple-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="bg-slate-700 px-6 py-4 flex justify-end space-x-3">
+                    <button onclick="closeUploadModal()" class="px-6 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="uploadDocument()" id="upload-btn" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all">
+                        Upload Document
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Sidebar -->
         <?php $currentPage = 'profile'; include __DIR__ . '/../layouts/employee_sidebar.php'; ?>
         
@@ -279,6 +375,65 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- My 201 Files Section -->
+                <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+                    <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+                        <div>
+                            <h4 class="text-xl font-semibold text-white">My 201 Files</h4>
+                            <p class="text-slate-400 text-sm mt-1">Manage your employment documents</p>
+                        </div>
+                        <button onclick="openUploadModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg shadow-purple-900/50">
+                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Upload Document
+                        </button>
+                    </div>
+                    
+                    <!-- Storage Quota -->
+                    <div class="px-6 py-4 bg-slate-900 border-b border-slate-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-slate-400">Storage Used</span>
+                            <span class="text-sm text-slate-300" id="storage-quota-text">0 MB / 50 MB</span>
+                        </div>
+                        <div class="w-full bg-slate-700 rounded-full h-2">
+                            <div id="storage-quota-bar" class="bg-gradient-to-r from-purple-600 to-purple-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Documents List -->
+                    <div class="p-6">
+                        <div id="my-documents-container" class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-700">
+                                <thead class="bg-slate-900">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Type</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Filename</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Size</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Upload Date</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="my-documents-table-body" class="bg-slate-800 divide-y divide-slate-700">
+                                    <!-- Documents will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="my-documents-empty-state" class="text-center py-12 hidden">
+                            <svg class="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-slate-400">No documents uploaded</h3>
+                            <p class="mt-1 text-sm text-slate-500">Upload your first document to get started.</p>
+                            <button onclick="openUploadModal()" class="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all">
+                                Upload Document
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -349,6 +504,7 @@
                     employeeData = result.data.employee;
                     displayEmployeeProfile(employeeData);
                     await loadProfileStats();
+                    await loadMyDocuments(); // Load 201 files
                 } else {
                     // Check if user is admin (admins don't have employee profiles)
                     if (currentUser && currentUser.role === 'admin') {
@@ -639,6 +795,396 @@
             }
             return token;
         }
+        
+        // ===== 201 Files Management Functions =====
+        let selectedFile = null;
+        let myEmployeeId = null;
+        let allMyDocuments = [];
+        
+        // Load my documents on page load
+        async function loadMyDocuments() {
+            if (!employeeData || !employeeData.id) return;
+            
+            myEmployeeId = employeeData.id;
+            
+            try {
+                const response = await fetch(AppConfig.getApiUrl(`/employees/${myEmployeeId}/documents`), {
+                    headers: { 'Authorization': `Bearer ${getAccessToken()}` }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const documents = result.data.documents || [];
+                    allMyDocuments = documents; // Store for later use
+                    const storage = result.data.storage || {};
+                    
+                    // Update storage quota
+                    updateStorageQuota(storage.total_size || 0, storage.storage_limit || 52428800);
+                    
+                    // Display documents
+                    displayMyDocuments(documents);
+                } else {
+                    console.error('Failed to load documents:', result.message);
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+        
+        function displayMyDocuments(documents) {
+            const tbody = document.getElementById('my-documents-table-body');
+            const emptyState = document.getElementById('my-documents-empty-state');
+            const container = document.getElementById('my-documents-container');
+            
+            if (!documents || documents.length === 0) {
+                tbody.innerHTML = '';
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = documents.map(doc => {
+                const uploadDate = new Date(doc.uploaded_at).toLocaleDateString();
+                const fileSize = formatFileSize(doc.file_size);
+                const fileIcon = getFileIcon(doc.mime_type);
+                const verifiedBadge = doc.is_verified 
+                    ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Verified</span>'
+                    : '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Pending</span>';
+                
+                return `
+                    <tr class="hover:bg-slate-700">
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="flex items-center">
+                                ${fileIcon}
+                                <span class="ml-2 text-sm text-slate-300">${escapeHtml(doc.document_type)}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-slate-300">${escapeHtml(doc.file_name)}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-400">${fileSize}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-400">${uploadDate}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button onclick="downloadMyDocument('${doc.id}')" class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                    Download
+                                </button>
+                                <button onclick="deleteMyDocument('${doc.id}', '${escapeHtml(doc.file_name)}')" class="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-md transition-colors">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function updateStorageQuota(usedBytes, limitBytes) {
+            const percentage = limitBytes > 0 ? (usedBytes / limitBytes) * 100 : 0;
+            const usedMB = (usedBytes / (1024 * 1024)).toFixed(1);
+            const limitMB = (limitBytes / (1024 * 1024)).toFixed(0);
+            
+            document.getElementById('storage-quota-text').textContent = `${usedMB} MB / ${limitMB} MB`;
+            document.getElementById('storage-quota-bar').style.width = `${Math.min(percentage, 100)}%`;
+            
+            // Change color if over 80%
+            const bar = document.getElementById('storage-quota-bar');
+            if (percentage > 80) {
+                bar.classList.remove('from-purple-600', 'to-purple-500');
+                bar.classList.add('from-red-600', 'to-red-500');
+            } else {
+                bar.classList.remove('from-red-600', 'to-red-500');
+                bar.classList.add('from-purple-600', 'to-purple-500');
+            }
+        }
+        
+        function openUploadModal() {
+            document.getElementById('upload-document-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        
+        function closeUploadModal() {
+            document.getElementById('upload-document-modal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            
+            // Reset form
+            document.getElementById('upload-document-form').reset();
+            clearSelectedFile();
+        }
+        
+        function handleFileSelect(file) {
+            if (!file) return;
+            
+            selectedFile = file;
+            
+            // Show selected file
+            document.getElementById('selected-file-name').textContent = file.name;
+            document.getElementById('selected-file-size').textContent = formatFileSize(file.size);
+            document.getElementById('selected-file-display').classList.remove('hidden');
+            document.getElementById('drop-zone').classList.add('hidden');
+        }
+        
+        function clearSelectedFile() {
+            selectedFile = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('selected-file-display').classList.add('hidden');
+            document.getElementById('drop-zone').classList.remove('hidden');
+        }
+        
+        async function uploadDocument() {
+            const documentType = document.getElementById('document-type').value;
+            const notes = document.getElementById('document-notes').value;
+            
+            if (!selectedFile) {
+                showToast('Please select a file to upload', 'error');
+                return;
+            }
+            
+            if (!documentType) {
+                showToast('Please select a document type', 'error');
+                return;
+            }
+            
+            // Show confirmation modal
+            const fileSize = (selectedFile.size / 1024 / 1024).toFixed(2);
+            showConfirm(
+                'Upload Document?',
+                `Are you sure you want to upload "${selectedFile.name}" (${fileSize} MB) as ${documentType}?`,
+                async function() {
+                    try {
+                        // Show progress and disable button
+                        const progressContainer = document.getElementById('upload-progress-container');
+                        const progressBar = document.getElementById('upload-progress-bar');
+                        const progressText = document.getElementById('upload-progress-text');
+                        const uploadBtn = document.getElementById('upload-btn');
+                        
+                        progressContainer.classList.remove('hidden');
+                        progressBar.style.width = '0%';
+                        progressText.textContent = '0%';
+                        uploadBtn.disabled = true;
+                        uploadBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Uploading...';
+                        
+                        const formData = new FormData();
+                        formData.append('file', selectedFile);
+                        formData.append('document_type', documentType);
+                        if (notes) formData.append('notes', notes);
+                        
+                        // Use XMLHttpRequest for progress tracking
+                        const xhr = new XMLHttpRequest();
+                        
+                        // Track upload progress
+                        xhr.upload.addEventListener('progress', (e) => {
+                            if (e.lengthComputable) {
+                                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                                progressBar.style.width = percentComplete + '%';
+                                progressText.textContent = percentComplete + '%';
+                            }
+                        });
+                        
+                        // Handle completion
+                        xhr.addEventListener('load', async () => {
+                            progressContainer.classList.add('hidden');
+                            uploadBtn.disabled = false;
+                            uploadBtn.innerHTML = 'Upload Document';
+                            
+                            if (xhr.status === 200) {
+                                const result = JSON.parse(xhr.responseText);
+                                if (result.success) {
+                                    showToast('Document uploaded successfully', 'success');
+                                    closeUploadModal();
+                                    await loadMyDocuments();
+                                } else {
+                                    const errorMsg = result.errors ? Object.values(result.errors).join(', ') : result.message;
+                                    showToast('Upload failed: ' + errorMsg, 'error');
+                                }
+                            } else {
+                                showToast('Upload failed. Please try again.', 'error');
+                            }
+                        });
+                        
+                        // Handle errors
+                        xhr.addEventListener('error', () => {
+                            progressContainer.classList.add('hidden');
+                            uploadBtn.disabled = false;
+                            uploadBtn.innerHTML = 'Upload Document';
+                            showToast('Failed to upload document. Please try again.', 'error');
+                        });
+                        
+                        // Send request
+                        xhr.open('POST', AppConfig.getApiUrl(`/employees/${myEmployeeId}/documents`));
+                        xhr.setRequestHeader('Authorization', `Bearer ${getAccessToken()}`);
+                        xhr.send(formData);
+                        
+                    } catch (error) {
+                        document.getElementById('upload-progress-container').classList.add('hidden');
+                        const uploadBtn = document.getElementById('upload-btn');
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = 'Upload Document';
+                        console.error('Error uploading document:', error);
+                        showToast('Failed to upload document. Please try again.', 'error');
+                    }
+                }
+            );
+        }
+        
+        async function downloadMyDocument(documentId) {
+            // Find the document to get its filename
+            const doc = allMyDocuments.find(d => d.id === documentId);
+            const fileName = doc ? doc.file_name : 'this document';
+            
+            showConfirm(
+                'Download Document?',
+                `Are you sure you want to download "${fileName}"?`,
+                async function() {
+                    try {
+                        showLoading('Preparing download...');
+                        
+                        const url = `/HRIS/api/employees/${myEmployeeId}/documents/${documentId}/download`;
+                        
+                        // Fetch with authentication
+                        const response = await fetch(url, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${getAccessToken()}`
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Download failed');
+                        }
+                        
+                        // Get filename from Content-Disposition header
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        let filename = 'download';
+                        if (contentDisposition) {
+                            const matches = /filename="([^"]+)"/.exec(contentDisposition);
+                            if (matches && matches[1]) {
+                                filename = matches[1];
+                            }
+                        }
+                        
+                        // Create blob and download
+                        const blob = await response.blob();
+                        const blobUrl = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(blobUrl);
+                        
+                        hideLoading();
+                        showToast('Document downloaded successfully', 'success');
+                        
+                    } catch (error) {
+                        hideLoading();
+                        console.error('Error downloading document:', error);
+                        showToast('Failed to download document. Please try again.', 'error');
+                    }
+                }
+            );
+        }
+        
+        async function deleteMyDocument(documentId, fileName) {
+            showConfirm(
+                'Delete Document?',
+                `Are you sure you want to delete "${fileName}"? This action cannot be undone.`,
+                async function() {
+                    try {
+                        showLoading('Deleting document...');
+                        
+                        const response = await fetch(AppConfig.getApiUrl(`/employees/${myEmployeeId}/documents/${documentId}`), {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${getAccessToken()}`
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        hideLoading();
+                        
+                        if (result.success) {
+                            showToast('Document deleted successfully', 'success');
+                            // Reload documents
+                            await loadMyDocuments();
+                        } else {
+                            showToast('Failed to delete document: ' + result.message, 'error');
+                        }
+                    } catch (error) {
+                        hideLoading();
+                        console.error('Error deleting document:', error);
+                        showToast('Failed to delete document. Please try again.', 'error');
+                    }
+                }
+            );
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) {
+                return bytes + ' B';
+            } else if (bytes < 1024 * 1024) {
+                return (bytes / 1024).toFixed(1) + ' KB';
+            } else {
+                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+        }
+        
+        function getFileIcon(mimeType) {
+            if (mimeType.includes('pdf')) {
+                return '<svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>';
+            } else if (mimeType.includes('image')) {
+                return '<svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>';
+            } else {
+                return '<svg class="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>';
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Drag and drop functionality
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        
+        dropZone?.addEventListener('click', () => fileInput.click());
+        
+        fileInput?.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        dropZone?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-purple-500', 'bg-slate-700');
+        });
+        
+        dropZone?.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-purple-500', 'bg-slate-700');
+        });
+        
+        dropZone?.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-purple-500', 'bg-slate-700');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
     </script>
 </body>
 </html>

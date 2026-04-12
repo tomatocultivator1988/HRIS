@@ -1230,7 +1230,9 @@
                         showSuccess('Error', 'Failed to save applicant. Please try again.', null);
                     } finally {
                         submitBtn.disabled = false;
-            }
+                    }
+                }
+            );
         });
 
         // ==================== PIPELINE VIEW FUNCTIONS ====================
