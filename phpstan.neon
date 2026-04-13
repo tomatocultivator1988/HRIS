@@ -1,0 +1,54 @@
+# PHPStan Configuration
+# Static analysis tool to catch bugs before they happen
+# FREE and runs locally - no infrastructure needed!
+
+parameters:
+    # Analysis level (0-9, where 9 is strictest)
+    # Start with level 5 for good balance of strictness and practicality
+    level: 5
+    
+    # Paths to analyze
+    paths:
+        - src
+    
+    # Paths to exclude
+    excludePaths:
+        - src/Views  # Skip view templates (they have mixed PHP/HTML)
+        - src/autoload.php  # Skip autoloader
+    
+    # Bootstrap file (loads your application dependencies)
+    bootstrapFiles:
+        - src/bootstrap.php
+    
+    # Ignore specific errors (use sparingly!)
+    ignoreErrors:
+        # Ignore "undefined variable" in views (they're passed from controllers)
+        - '#Variable \$[a-zA-Z0-9_]+ might not be defined#'
+          path: src/Views/*
+        
+        # Ignore Supabase dynamic properties (they use magic methods)
+        - '#Access to an undefined property#'
+          path: src/Core/SupabaseConnection.php
+    
+    # Check for missing type hints
+    checkMissingIterableValueType: false  # Too strict for now
+    checkGenericClassInNonGenericObjectType: false  # Too strict for now
+    
+    # Report unused private properties and methods
+    checkUninitializedProperties: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    
+    # Parallel processing (faster analysis)
+    parallel:
+        jobSize: 20
+        maximumNumberOfProcesses: 4
+        minimumNumberOfJobsPerProcess: 2
+    
+    # Memory limit
+    memoryLimit: 512M
+    
+    # Report progress
+    reportUnmatchedIgnoredErrors: false
+    
+    # Treat PHP warnings as errors
+    treatPhpDocTypesAsCertain: true
