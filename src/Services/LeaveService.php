@@ -234,6 +234,7 @@ class LeaveService
     
     /**
      * Create attendance records for approved leave dates
+     * OPTIMIZED: Batch operations instead of one-by-one queries
      *
      * @param array $leaveRequest Approved leave request
      * @return void
@@ -241,6 +242,8 @@ class LeaveService
     private function createLeaveAttendanceRecords(array $leaveRequest): void
     {
         try {
+            \Core\PerformanceMonitor::start('leave_attendance_creation');
+            
             // Get database connection using reflection
             $reflection = new \ReflectionClass($this->leaveRequestModel);
             $property = $reflection->getProperty('db');
@@ -251,67 +254,98 @@ class LeaveService
             $endDate = new \DateTime($leaveRequest['end_date'], $this->appTimezone);
             $current = clone $startDate;
             
-            $createdRecords = 0;
+            // ========================================
+            // PERFORMANCE OPTIMIZATION: Batch Operations
+            // ========================================
+            // OLD: Query database for EACH date in loop (N queries)
+            // NEW: Load all existing records once, then batch insert/update
             
-            // Iterate through each day in the leave period
+            // 1. Collect all working days in the leave period
+            $workingDays = [];
             while ($current <= $endDate) {
                 $dateStr = $current->format('Y-m-d');
-                
-                // Only create records for working days
                 if ($this->isWorkingDay($dateStr)) {
-                    // Check if attendance record already exists using Supabase select
-                    $checkResult = $db->select('attendance', [
-                        'employee_id' => $leaveRequest['employee_id'],
-                        'date' => $dateStr
-                    ]);
-                    
-                    // SupabaseConnection::select returns array directly
-                    $existingRecord = null;
-                    if (is_array($checkResult) && !empty($checkResult)) {
-                        $existingRecord = $checkResult[0];
-                    }
-                    
-                    // Only create if no record exists
-                    if (!$existingRecord) {
-                        $leaveAttendanceData = [
-                            'employee_id' => $leaveRequest['employee_id'],
-                            'date' => $dateStr,
-                            'time_in' => null,
-                            'time_out' => null,
-                            'status' => 'On Leave',
-                            'work_hours' => 0.00,
-                            'remarks' => 'On approved leave (Leave ID: ' . $leaveRequest['id'] . ')'
-                        ];
-                        
-                        $insertResult = $db->insert('attendance', $leaveAttendanceData);
-                        
-                        // SupabaseConnection::insert returns the record directly or empty array
-                        if (!empty($insertResult)) {
-                            $createdRecords++;
-                        }
-                    } else {
-                        $hasTimeLogs = !empty($existingRecord['time_in']) || !empty($existingRecord['time_out']);
-                        $existingStatus = $existingRecord['status'] ?? '';
-
-                        if (!$hasTimeLogs && $existingStatus !== 'On Leave') {
-                            $db->update('attendance', [
-                                'status' => 'On Leave',
-                                'work_hours' => 0.00,
-                                'remarks' => 'On approved leave (Leave ID: ' . $leaveRequest['id'] . ')',
-                                'time_in' => null,
-                                'time_out' => null
-                            ], [
-                                'id' => $existingRecord['id']
-                            ]);
-                            $createdRecords++;
-                        }
-                    }
+                    $workingDays[] = $dateStr;
                 }
-                
                 $current->add(new \DateInterval('P1D'));
             }
             
-            error_log("Created {$createdRecords} attendance records for approved leave (Leave ID: {$leaveRequest['id']})");
+            if (empty($workingDays)) {
+                error_log("No working days found for leave period");
+                return;
+            }
+            
+            // 2. Batch load ALL existing attendance records for this employee and date range (1 query)
+            $existingRecords = $db->select('attendance', [
+                'employee_id' => $leaveRequest['employee_id']
+            ]);
+            
+            // Index by date for fast lookup
+            $existingByDate = [];
+            foreach ($existingRecords as $record) {
+                $recordDate = $record['date'];
+                if (in_array($recordDate, $workingDays)) {
+                    $existingByDate[$recordDate] = $record;
+                }
+            }
+            
+            // 3. Prepare batch operations
+            $recordsToInsert = [];
+            $recordsToUpdate = [];
+            
+            foreach ($workingDays as $dateStr) {
+                if (!isset($existingByDate[$dateStr])) {
+                    // No record exists - prepare for insert
+                    $recordsToInsert[] = [
+                        'employee_id' => $leaveRequest['employee_id'],
+                        'date' => $dateStr,
+                        'time_in' => null,
+                        'time_out' => null,
+                        'status' => 'On Leave',
+                        'work_hours' => 0.00,
+                        'remarks' => 'On approved leave (Leave ID: ' . $leaveRequest['id'] . ')'
+                    ];
+                } else {
+                    // Record exists - check if we need to update
+                    $existingRecord = $existingByDate[$dateStr];
+                    $hasTimeLogs = !empty($existingRecord['time_in']) || !empty($existingRecord['time_out']);
+                    $existingStatus = $existingRecord['status'] ?? '';
+                    
+                    if (!$hasTimeLogs && $existingStatus !== 'On Leave') {
+                        $recordsToUpdate[] = [
+                            'id' => $existingRecord['id'],
+                            'status' => 'On Leave',
+                            'work_hours' => 0.00,
+                            'remarks' => 'On approved leave (Leave ID: ' . $leaveRequest['id'] . ')',
+                            'time_in' => null,
+                            'time_out' => null
+                        ];
+                    }
+                }
+            }
+            
+            // 4. Execute batch operations
+            $createdRecords = 0;
+            
+            // Batch insert new records (insert one by one since Supabase doesn't support bulk insert via REST)
+            // But at least we're not checking existence for each one
+            foreach ($recordsToInsert as $record) {
+                $insertResult = $db->insert('attendance', $record);
+                if (!empty($insertResult)) {
+                    $createdRecords++;
+                }
+            }
+            
+            // Batch update existing records
+            foreach ($recordsToUpdate as $record) {
+                $recordId = $record['id'];
+                unset($record['id']);
+                $db->update('attendance', $record, ['id' => $recordId]);
+                $createdRecords++;
+            }
+            
+            $duration = \Core\PerformanceMonitor::end('leave_attendance_creation');
+            error_log("Created/updated {$createdRecords} attendance records for leave (Leave ID: {$leaveRequest['id']}) in {$duration}ms");
             
         } catch (Exception $e) {
             // Log error but don't fail the approval
