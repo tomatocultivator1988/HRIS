@@ -27,6 +27,7 @@ class ReportService
     
     /**
      * Generate attendance summary report
+     * OPTIMIZED: Batch load employee data
      * 
      * @param string $startDate Start date (Y-m-d)
      * @param string $endDate End date (Y-m-d)
@@ -36,13 +37,12 @@ class ReportService
      */
     public function generateAttendanceReport(string $startDate, string $endDate, array $filters = []): array
     {
+        \Core\PerformanceMonitor::start('attendance_report_generation');
+        
         // Validate date range
         if (strtotime($startDate) > strtotime($endDate)) {
             throw new \Exception('Start date must be before end date');
         }
-        
-        // Load database helper (not needed - using models instead)
-        // Database connection is handled by models
         
         // Build query conditions
         $conditions = [
@@ -64,7 +64,7 @@ class ReportService
         // Get attendance records
         $records = $this->db->select(TABLE_ATTENDANCE, $conditions);
         
-        // If no records found, return empty report instead of throwing exception
+        // If no records found, return empty report
         if (empty($records)) {
             return [
                 'period' => [
@@ -85,10 +85,23 @@ class ReportService
             ];
         }
         
-        // Filter by department if specified
+        // ========================================
+        // PERFORMANCE OPTIMIZATION: Batch load employees ONCE
+        // ========================================
+        // OLD: Query employee for EACH record (N queries)
+        // NEW: Load all employees once, lookup in memory (1 query)
+        
+        $employeeIds = array_unique(array_column($records, 'employee_id'));
+        $allEmployees = $this->db->select(TABLE_EMPLOYEES, []);
+        $employeeMap = [];
+        foreach ($allEmployees as $emp) {
+            $employeeMap[$emp['id']] = $emp;
+        }
+        
+        // Filter by department if specified (using pre-loaded employee data)
         if (!empty($filters['department'])) {
-            $records = array_filter($records, function($record) use ($filters) {
-                $employee = $this->db->find(TABLE_EMPLOYEES, $record['employee_id']);
+            $records = array_filter($records, function($record) use ($filters, $employeeMap) {
+                $employee = $employeeMap[$record['employee_id']] ?? null;
                 return $employee && $employee['department'] === $filters['department'];
             });
         }
@@ -96,8 +109,11 @@ class ReportService
         // Calculate summary statistics
         $summary = $this->calculateAttendanceSummary($records);
         
-        // Get employee details for each record
-        $detailedRecords = $this->enrichAttendanceRecords($records);
+        // Get employee details for each record (using pre-loaded data)
+        $detailedRecords = $this->enrichAttendanceRecords($records, $employeeMap);
+        
+        $duration = \Core\PerformanceMonitor::end('attendance_report_generation');
+        error_log("Attendance report generated in {$duration}ms for " . count($records) . " records");
         
         return [
             'period' => [
@@ -113,6 +129,7 @@ class ReportService
     
     /**
      * Generate leave summary report
+     * OPTIMIZED: Batch load employee and leave type data
      * 
      * @param string $startDate Start date (Y-m-d)
      * @param string $endDate End date (Y-m-d)
@@ -122,15 +139,14 @@ class ReportService
      */
     public function generateLeaveReport(string $startDate, string $endDate, array $filters = []): array
     {
+        \Core\PerformanceMonitor::start('leave_report_generation');
+        
         // Validate date range
         if (strtotime($startDate) > strtotime($endDate)) {
             throw new \Exception('Start date must be before end date');
         }
         
-        // Database connection handled by models
-        
-        // Build query conditions - get all leave requests and filter in PHP
-        // This is more reliable than date range queries with PostgREST
+        // Build query conditions
         $conditions = [];
         
         // Add filters
@@ -146,22 +162,13 @@ class ReportService
             $conditions['status'] = $filters['status'];
         }
         
-        // Debug logging
-        error_log("Leave Report - Date Range: $startDate to $endDate");
-        error_log("Leave Report - Conditions: " . json_encode($conditions));
-        
-        // Get all leave requests (or filtered by status/type)
+        // Get all leave requests
         $allRequests = $this->db->select(TABLE_LEAVE_REQUESTS, $conditions);
         
-        error_log("Leave Report - Found " . count($allRequests) . " total requests before date filtering");
-        
-        // Filter by date range in PHP (more reliable than PostgREST date operators)
+        // Filter by date range in PHP
         $requests = array_filter($allRequests, function($request) use ($startDate, $endDate) {
             $reqStartDate = $request['start_date'] ?? '';
             $reqEndDate = $request['end_date'] ?? '';
-            
-            // Debug: log the dates being compared
-            error_log("Comparing: request[$reqStartDate to $reqEndDate] vs report[$startDate to $endDate]");
             
             // Extract just the date part if it's a timestamp
             if (strlen($reqStartDate) > 10) {
@@ -172,16 +179,10 @@ class ReportService
             }
             
             // Check if leave request overlaps with report date range
-            // Overlap occurs if: request_start <= report_end AND request_end >= report_start
-            $overlaps = $reqStartDate <= $endDate && $reqEndDate >= $startDate;
-            error_log("After trimming: request[$reqStartDate to $reqEndDate] overlaps=$overlaps");
-            
-            return $overlaps;
+            return $reqStartDate <= $endDate && $reqEndDate >= $startDate;
         });
         
-        error_log("Leave Report - Found " . count($requests) . " requests after date filtering");
-        
-        // If no requests found, return empty report instead of throwing exception
+        // If no requests found, return empty report
         if (empty($requests)) {
             return [
                 'period' => [
@@ -202,19 +203,40 @@ class ReportService
             ];
         }
         
-        // Filter by department if specified
+        // ========================================
+        // PERFORMANCE OPTIMIZATION: Batch load employees and leave types ONCE
+        // ========================================
+        // OLD: Query employee AND leave type for EACH request (2N queries)
+        // NEW: Load all data once, lookup in memory (2 queries total)
+        
+        $allEmployees = $this->db->select(TABLE_EMPLOYEES, []);
+        $employeeMap = [];
+        foreach ($allEmployees as $emp) {
+            $employeeMap[$emp['id']] = $emp;
+        }
+        
+        $allLeaveTypes = $this->db->select(TABLE_LEAVE_TYPES, []);
+        $leaveTypeMap = [];
+        foreach ($allLeaveTypes as $type) {
+            $leaveTypeMap[$type['id']] = $type;
+        }
+        
+        // Filter by department if specified (using pre-loaded employee data)
         if (!empty($filters['department'])) {
-            $requests = array_filter($requests, function($request) use ($filters) {
-                $employee = $this->db->find(TABLE_EMPLOYEES, $request['employee_id']);
+            $requests = array_filter($requests, function($request) use ($filters, $employeeMap) {
+                $employee = $employeeMap[$request['employee_id']] ?? null;
                 return $employee && $employee['department'] === $filters['department'];
             });
         }
         
-        // Calculate summary statistics
-        $summary = $this->calculateLeaveSummary($requests);
+        // Calculate summary statistics (using pre-loaded leave types)
+        $summary = $this->calculateLeaveSummary($requests, $leaveTypeMap);
         
-        // Get detailed records with employee and leave type info
-        $detailedRecords = $this->enrichLeaveRecords($requests);
+        // Get detailed records with employee and leave type info (using pre-loaded data)
+        $detailedRecords = $this->enrichLeaveRecords($requests, $employeeMap, $leaveTypeMap);
+        
+        $duration = \Core\PerformanceMonitor::end('leave_report_generation');
+        error_log("Leave report generated in {$duration}ms for " . count($requests) . " requests");
         
         return [
             'period' => [
@@ -338,11 +360,13 @@ class ReportService
     
     /**
      * Calculate leave summary statistics
+     * OPTIMIZED: Use pre-loaded leave type map
      * 
      * @param array $requests Leave requests
+     * @param array $leaveTypeMap Pre-loaded leave types indexed by ID
      * @return array Summary statistics
      */
-    private function calculateLeaveSummary(array $requests): array
+    private function calculateLeaveSummary(array $requests, array $leaveTypeMap = []): array
     {
         $summary = [
             'total_requests' => count($requests),
@@ -373,15 +397,12 @@ class ReportService
                 $summary['total_days'] += floatval($request['days']);
             }
             
-            // Group by leave type - use name instead of ID
+            // Group by leave type - use pre-loaded data (NO QUERY!)
             $leaveTypeId = $request['leave_type_id'] ?? null;
             $leaveTypeName = 'Unknown';
             
-            if ($leaveTypeId) {
-                $leaveType = $this->db->find(TABLE_LEAVE_TYPES, $leaveTypeId);
-                if ($leaveType && !empty($leaveType['name'])) {
-                    $leaveTypeName = $leaveType['name'];
-                }
+            if ($leaveTypeId && isset($leaveTypeMap[$leaveTypeId])) {
+                $leaveTypeName = $leaveTypeMap[$leaveTypeId]['name'] ?? 'Unknown';
             }
             
             if (!isset($summary['by_leave_type'][$leaveTypeName])) {
@@ -399,18 +420,19 @@ class ReportService
     
     /**
      * Enrich attendance records with employee details
+     * OPTIMIZED: Use pre-loaded employee map
      * 
      * @param array $records Attendance records
+     * @param array $employeeMap Pre-loaded employees indexed by ID
      * @return array Enriched records
      */
-    private function enrichAttendanceRecords(array $records): array
+    private function enrichAttendanceRecords(array $records, array $employeeMap = []): array
     {
-        // Database connection handled by models
-        
         $enriched = [];
         
         foreach ($records as $record) {
-            $employee = $this->db->find(TABLE_EMPLOYEES, $record['employee_id']);
+            // Use pre-loaded employee data (NO QUERY!)
+            $employee = $employeeMap[$record['employee_id']] ?? null;
             
             if ($employee) {
                 $record['employee'] = [
@@ -429,19 +451,20 @@ class ReportService
     
     /**
      * Enrich leave records with employee and leave type details
+     * OPTIMIZED: Use pre-loaded employee and leave type maps
      * 
      * @param array $requests Leave requests
+     * @param array $employeeMap Pre-loaded employees indexed by ID
+     * @param array $leaveTypeMap Pre-loaded leave types indexed by ID
      * @return array Enriched records
      */
-    private function enrichLeaveRecords(array $requests): array
+    private function enrichLeaveRecords(array $requests, array $employeeMap = [], array $leaveTypeMap = []): array
     {
-        // Database connection handled by models
-        
         $enriched = [];
         
         foreach ($requests as $request) {
-            // Get employee details
-            $employee = $this->db->find(TABLE_EMPLOYEES, $request['employee_id']);
+            // Use pre-loaded employee data (NO QUERY!)
+            $employee = $employeeMap[$request['employee_id']] ?? null;
             
             if ($employee) {
                 $request['employee'] = [
@@ -452,8 +475,8 @@ class ReportService
                 ];
             }
             
-            // Get leave type details
-            $leaveType = $this->db->find(TABLE_LEAVE_TYPES, $request['leave_type_id']);
+            // Use pre-loaded leave type data (NO QUERY!)
+            $leaveType = $leaveTypeMap[$request['leave_type_id']] ?? null;
             
             if ($leaveType) {
                 $request['leave_type'] = [
