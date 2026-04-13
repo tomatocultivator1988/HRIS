@@ -108,6 +108,9 @@ class PayrollService
     public function generatePayrollRun(string $periodId, array $options = []): array
     {
         return $this->withOperationLock('generate:' . $periodId, function () use ($periodId, $options): array {
+            // Start performance monitoring
+            \Core\PerformanceMonitor::start('payroll_generation_total');
+            
             $period = $this->periodModel->find($periodId);
             if (!$period) {
                 throw new NotFoundException('Payroll period not found');
@@ -152,6 +155,51 @@ class PayrollService
                 $periodEnd = (string) ($period['end_date'] ?? '');
                 $periodDays = max(1, $this->getDateDiffInDays($periodStart, $periodEnd));
 
+                // ========================================
+                // PERFORMANCE OPTIMIZATION: Batch Load All Data First
+                // ========================================
+                // OLD: Made 2-3 HTTP requests PER employee (200-300 total for 100 employees)
+                // NEW: Make ~3 HTTP requests TOTAL regardless of employee count
+                
+                // 1. Batch load all position salaries (1 query)
+                $allPositionSalaries = $this->positionSalaryModel->getAllActive();
+                $positionSalaryMap = [];
+                foreach ($allPositionSalaries as $salary) {
+                    $positionSalaryMap[$salary['position']] = $salary;
+                }
+                
+                // 2. Batch load all employee IDs for attendance query
+                $employeeIds = array_map(function($emp) { return $emp['id']; }, $employees);
+                
+                // 3. Batch load ALL attendance records for the period (1 query)
+                // Get all attendance records and filter in PHP
+                $allAttendance = $this->attendanceModel->all();
+                $attendanceByEmployee = [];
+                foreach ($allAttendance as $record) {
+                    $empId = $record['employee_id'];
+                    $date = $record['date'];
+                    
+                    // Filter by employee IDs and date range
+                    if (in_array($empId, $employeeIds) && $date >= $periodStart && $date <= $periodEnd) {
+                        if (!isset($attendanceByEmployee[$empId])) {
+                            $attendanceByEmployee[$empId] = [];
+                        }
+                        $attendanceByEmployee[$empId][] = $record;
+                    }
+                }
+                
+                // 4. Batch load employee compensations if needed (1 query)
+                $allCompensations = $this->compensationModel->all();
+                $compensationByEmployee = [];
+                foreach ($allCompensations as $comp) {
+                    $empId = $comp['employee_id'];
+                    // Store active compensations
+                    if (($comp['is_active'] ?? false) || 
+                        (isset($comp['effective_date']) && $comp['effective_date'] <= $periodEnd)) {
+                        $compensationByEmployee[$empId] = $comp;
+                    }
+                }
+
                 $totals = [
                     'employee_count' => 0,
                     'total_gross' => 0.0,
@@ -161,30 +209,33 @@ class PayrollService
 
                 $lineItems = [];
 
+                // Now loop through employees using PRE-LOADED data (no queries in loop!)
                 foreach ($employees as $employee) {
                     $employeeId = (string) ($employee['id'] ?? '');
                     if ($employeeId === '') {
                         continue;
                     }
 
-                    // Get compensation from position salary (new approach)
+                    // Get compensation from pre-loaded position salary map
                     $position = (string) ($employee['position'] ?? '');
                     $compensation = null;
                     
-                    if ($position !== '') {
-                        $compensation = $this->positionSalaryModel->getByPosition($position);
+                    if ($position !== '' && isset($positionSalaryMap[$position])) {
+                        $compensation = $positionSalaryMap[$position];
                     }
                     
-                    // Fallback to old employee compensation if position salary not found
-                    if (!$compensation) {
-                        $compensation = $this->compensationModel->getActiveByEmployeeAndDate($employeeId, $periodEnd);
+                    // Fallback to pre-loaded employee compensation
+                    if (!$compensation && isset($compensationByEmployee[$employeeId])) {
+                        $compensation = $compensationByEmployee[$employeeId];
                     }
                     
                     if (!$compensation) {
                         continue;
                     }
 
-                    $attendance = $this->attendanceModel->getByDateRange($employeeId, $periodStart, $periodEnd);
+                    // Get attendance from pre-loaded map
+                    $attendance = $attendanceByEmployee[$employeeId] ?? [];
+                    
                     $linePayload = $this->buildLineItemPayload($employeeId, $compensation, $attendance, $periodDays, $includeOvertime);
                     $lineItem = $this->lineItemModel->upsertLineItem($run['id'], $employeeId, $linePayload);
 
@@ -209,6 +260,10 @@ class PayrollService
 
                 $this->periodModel->update($periodId, ['status' => 'Processing']);
                 $freshRun = $this->runModel->find($run['id']);
+
+                // End performance monitoring
+                $duration = \Core\PerformanceMonitor::end('payroll_generation_total');
+                error_log("Payroll generation completed in {$duration}ms for {$totals['employee_count']} employees");
 
                 return [
                     'run' => $freshRun ?? $run,
