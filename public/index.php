@@ -14,6 +14,19 @@ ini_set('display_errors', 1);
 // Set timezone to Philippines
 date_default_timezone_set('Asia/Manila');
 
+// ========================================
+// REQUEST ID TRACKING (ZERO COST!)
+// ========================================
+// Generate or use existing request ID for tracing requests through logs
+$requestId = $_SERVER['HTTP_X_REQUEST_ID'] ?? uniqid('req_', true);
+$_SERVER['HTTP_X_REQUEST_ID'] = $requestId;
+
+// Add to response headers so clients can reference it
+header('X-Request-ID: ' . $requestId);
+
+// Log request start
+error_log("[{$requestId}] Request started: {$_SERVER['REQUEST_METHOD']} {$_SERVER['REQUEST_URI']}");
+
 // Define application root
 define('APP_ROOT', dirname(__DIR__));
 

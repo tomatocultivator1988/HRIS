@@ -95,7 +95,7 @@ return [
         'allowed_functions' => ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'NOW', 'CURDATE'],
     ],
     
-    // XSS protection
+    // XSS protection (UPDATED FOR BETTER CSP)
     'xss' => [
         'auto_escape_output' => env('AUTO_ESCAPE_OUTPUT', true),
         'content_security_policy' => env('CSP_ENABLED', true),
@@ -107,17 +107,20 @@ return [
             'img-src' => "'self' data: https:",
             'connect-src' => "'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com",
             'frame-ancestors' => "'none'",
+            'base-uri' => "'self'",
+            'form-action' => "'self'",
+            'upgrade-insecure-requests' => '',
         ],
     ],
     
-    // Security headers
+    // Security headers (UPDATED FOR BETTER SECURITY SCORE)
     'headers' => [
         'x_frame_options' => env('X_FRAME_OPTIONS', 'DENY'),
         'x_content_type_options' => env('X_CONTENT_TYPE_OPTIONS', 'nosniff'),
         'x_xss_protection' => env('X_XSS_PROTECTION', '1; mode=block'),
-        'strict_transport_security' => env('HSTS_ENABLED', false) ? 'max-age=31536000; includeSubDomains' : null,
+        'strict_transport_security' => env('HSTS_ENABLED', false) ? 'max-age=31536000; includeSubDomains; preload' : null,
         'referrer_policy' => env('REFERRER_POLICY', 'strict-origin-when-cross-origin'),
-        'permissions_policy' => env('PERMISSIONS_POLICY', 'geolocation=(), microphone=(), camera=()'),
+        'permissions_policy' => env('PERMISSIONS_POLICY', 'geolocation=(), microphone=(), camera=(), payment=(), usb=()'),
     ],
     
     // Encryption settings
