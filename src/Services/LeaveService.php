@@ -4,6 +4,8 @@ namespace Services;
 
 use Core\ValidationException;
 use Core\NotFoundException;
+use Core\SimpleCache;
+use Core\PerformanceMonitor;
 use Models\LeaveRequest;
 use Models\Employee;
 use Exception;
@@ -724,38 +726,42 @@ class LeaveService
      */
     public function getLeaveTypes(): array
     {
-        try {
-            // Get database connection using reflection
-            $reflection = new \ReflectionClass($this->leaveRequestModel);
-            $property = $reflection->getProperty('db');
-            $property->setAccessible(true);
-            $db = $property->getValue($this->leaveRequestModel);
+        // Cache leave types for 5 minutes (they rarely change)
+        return SimpleCache::remember('leave_types', function() {
+            PerformanceMonitor::start('get_leave_types');
             
-            // Query leave types from database
-            $result = $db->select('leave_types', []);
-            
-            error_log('getLeaveTypes result: ' . json_encode($result));
-            
-            // SupabaseConnection::select returns array directly, not wrapped in success/data
-            if (is_array($result) && !empty($result)) {
-                return $result;
-            }
-            
-            // If no leave types in database, return default types with string IDs for backward compatibility
-            return [
-                [
-                    'id' => '1',
-                    'name' => 'Vacation Leave',
-                    'description' => 'Paid time off for vacation',
-                    'max_days_per_year' => 15,
-                    'requires_approval' => true,
-                    'is_active' => true
-                ],
-                [
-                    'id' => '2',
-                    'name' => 'Sick Leave',
-                    'description' => 'Paid time off for illness',
-                    'max_days_per_year' => 15,
+            try {
+                // Get database connection using reflection
+                $reflection = new \ReflectionClass($this->leaveRequestModel);
+                $property = $reflection->getProperty('db');
+                $property->setAccessible(true);
+                $db = $property->getValue($this->leaveRequestModel);
+                
+                // Query leave types from database
+                $result = $db->select('leave_types', []);
+                
+                error_log('getLeaveTypes result: ' . json_encode($result));
+                
+                // SupabaseConnection::select returns array directly, not wrapped in success/data
+                if (is_array($result) && !empty($result)) {
+                    return $result;
+                }
+                
+                // If no leave types in database, return default types with string IDs for backward compatibility
+                return [
+                    [
+                        'id' => '1',
+                        'name' => 'Vacation Leave',
+                        'description' => 'Paid time off for vacation',
+                        'max_days_per_year' => 15,
+                        'requires_approval' => true,
+                        'is_active' => true
+                    ],
+                    [
+                        'id' => '2',
+                        'name' => 'Sick Leave',
+                        'description' => 'Paid time off for illness',
+                        'max_days_per_year' => 15,
                     'requires_approval' => true,
                     'is_active' => true
                 ],
@@ -768,10 +774,13 @@ class LeaveService
                     'is_active' => true
                 ]
             ];
-        } catch (Exception $e) {
-            error_log('LeaveService::getLeaveTypes Error: ' . $e->getMessage());
-            throw new Exception('Failed to retrieve leave types: ' . $e->getMessage());
-        }
+            } catch (Exception $e) {
+                error_log('LeaveService::getLeaveTypes Error: ' . $e->getMessage());
+                throw new Exception('Failed to retrieve leave types: ' . $e->getMessage());
+            } finally {
+                PerformanceMonitor::end('get_leave_types');
+            }
+        }, 300); // Cache for 5 minutes
     }
     
     /**

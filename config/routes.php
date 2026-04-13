@@ -75,6 +75,10 @@ return function (Router $router) {
     $router->addRoute('GET', '/api/payroll/payslips.php', 'PayrollController@employeePayslips', ['logging', 'auth']);
     $router->addRoute('GET', '/api/payroll/payslip.php', 'PayrollController@employeePayslipDetail', ['logging', 'auth']);
     
+    // Health check endpoints (no authentication required for monitoring)
+    $router->addRoute('GET', '/health', 'HealthController@check', []);
+    $router->addRoute('GET', '/health/detailed', 'HealthController@detailed', ['auth']);
+    
     // Web routes (HTML responses)
     $router->addRoute('GET', '/', 'AuthController@loginForm', ['logging']);
     $router->addRoute('GET', '/login', 'AuthController@loginForm', ['logging']);

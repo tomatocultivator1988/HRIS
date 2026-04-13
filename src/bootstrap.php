@@ -109,5 +109,11 @@ $container->bind(\Controllers\AnnouncementController::class);
 $container->bind(\Controllers\PayrollController::class);
 $container->bind(\Controllers\RecruitmentController::class);
 $container->bind(\Controllers\DocumentController::class);
+$container->bind(\Controllers\HealthController::class);
+
+// Register utility classes as singletons
+$container->singleton(\Core\StructuredLogger::class, function() {
+    return new \Core\StructuredLogger();
+});
 
 return $container;
