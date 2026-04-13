@@ -12,6 +12,10 @@ require_once __DIR__ . '/autoload.php';
 // Load helper functions
 require_once __DIR__ . '/Config/helpers.php';
 
+// Initialize Sentry error tracking (ZERO COST - free tier!)
+// This will gracefully degrade if Sentry SDK is not installed
+\Core\SentryIntegration::init();
+
 use Core\Container;
 use Core\Router;
 use Core\Request;

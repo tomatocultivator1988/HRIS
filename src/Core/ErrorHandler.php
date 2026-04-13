@@ -273,6 +273,14 @@ class ErrorHandler
 
         // Write to log file
         $this->writeLog($logEntry);
+        
+        // Send to Sentry if available (ZERO COST - free tier!)
+        try {
+            SentryIntegration::captureException($e, $context);
+        } catch (\Exception $sentryError) {
+            // Silently fail - don't let Sentry errors break the application
+            error_log('Sentry error: ' . $sentryError->getMessage());
+        }
     }
 
     /**
