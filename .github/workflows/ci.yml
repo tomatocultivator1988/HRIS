@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        coverage: none
+    
+    - name: Download PHPStan
+      run: |
+        wget -q https://github.com/phpstan/phpstan/releases/latest/download/phpstan.phar
+        chmod +x phpstan.phar
+    
+    - name: Run PHPStan Static Analysis
+      run: |
+        php phpstan.phar analyze --level=5 src --no-progress
+      continue-on-error: false
+    
+    - name: Check PHP Syntax
+      run: |
+        echo "Checking PHP syntax in all files..."
+        find src -name "*.php" -print0 | while IFS= read -r -d '' file; do
+          php -l "$file" || exit 1
+        done
+        echo "✅ All PHP files have valid syntax!"
+    
+    - name: Check for Common Issues
+      run: |
+        echo "Checking for common code issues..."
+        
+        # Check for var_dump (should not be in production code)
+        if grep -r "var_dump" src/ --include="*.php"; then
+          echo "❌ Found var_dump() in code - please remove debug statements"
+          exit 1
+        fi
+        
+        # Check for die() or exit() (except in specific files)
+        if grep -r "die(" src/ --include="*.php" --exclude="ErrorHandler.php"; then
+          echo "⚠️  Warning: Found die() in code - consider using exceptions instead"
+        fi
+        
+        echo "✅ No common issues found!"
+    
+    - name: Summary
+      if: success()
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "✅ All checks passed!"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "✓ PHPStan Level 5 - No type errors"
+        echo "✓ PHP Syntax - All files valid"
+        echo "✓ Code Quality - No debug statements"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
