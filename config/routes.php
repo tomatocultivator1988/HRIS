@@ -79,6 +79,10 @@ return function (Router $router) {
     $router->addRoute('GET', '/health', 'HealthController@check', []);
     $router->addRoute('GET', '/health/detailed', 'HealthController@detailed', ['auth']);
     
+    // System health dashboard (for developers - manual URL access)
+    $router->addRoute('GET', '/system/health-dashboard', 'SystemHealthController@dashboard', []);
+    $router->addRoute('GET', '/api/system/metrics', 'SystemHealthController@metrics', []);
+    
     // Web routes (HTML responses)
     $router->addRoute('GET', '/', 'AuthController@loginForm', ['logging']);
     $router->addRoute('GET', '/login', 'AuthController@loginForm', ['logging']);
