@@ -1,4 +1,4 @@
-# 🛠️ HRIS System - Tech Stack
+ # 🛠️ HRIS System - Tech Stack
 
 ## Project Overview
 
