@@ -451,7 +451,7 @@
                 // Prevent navigation away from this page
                 window.addEventListener('beforeunload', function(e) {
                     e.preventDefault();
-                    e.returnValue = '';
+                    e.returnValue = '';eturnValue = '';
                 });
             }
         })();
@@ -490,7 +490,5 @@
         // Focus first input on page load
         document.getElementById('currentPassword').focus();
     </script>
-</body>
-</html>
 </body>
 </html>
