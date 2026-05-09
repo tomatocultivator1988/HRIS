@@ -41,6 +41,7 @@ function initializeCharts() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#cbd5e1' } } },
             scales: {
                 y: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
@@ -62,6 +63,7 @@ function initializeCharts() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#cbd5e1' } } }
         }
     });
@@ -133,11 +135,15 @@ function restoreContent() {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Employees by Department</h3>
-                <canvas id="departmentChart"></canvas>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="departmentChart"></canvas>
+                </div>
             </div>
             <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Employment Status</h3>
-                <canvas id="statusChart"></canvas>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
             </div>
         </div>
 

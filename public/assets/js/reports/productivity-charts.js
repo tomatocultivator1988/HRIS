@@ -50,6 +50,7 @@ function initializeCharts() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#cbd5e1' } } },
             scales: {
                 y: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' }, max: 100 },
@@ -72,6 +73,7 @@ function initializeCharts() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#cbd5e1' } } },
             scales: {
                 y: { ticks: { color: '#cbd5e1' }, grid: { color: '#334155' } },
@@ -239,11 +241,15 @@ function restoreContent() {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Attendance Rate Trend</h3>
-                <canvas id="rateChart"></canvas>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="rateChart"></canvas>
+                </div>
             </div>
             <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Work Hours by Department</h3>
-                <canvas id="hoursChart"></canvas>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="hoursChart"></canvas>
+                </div>
             </div>
         </div>
 

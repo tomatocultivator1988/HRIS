@@ -48,6 +48,7 @@ function initializeCharts() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#cbd5e1' } } }
         }
     });
@@ -65,6 +66,7 @@ function initializeCharts() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#cbd5e1' } } }
         }
     });
@@ -181,11 +183,15 @@ function restoreContent() {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Leave Status</h3>
-                <canvas id="statusChart"></canvas>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
             </div>
             <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                 <h3 class="text-lg font-semibold text-white mb-4">Leave Types Distribution</h3>
-                <canvas id="typeChart"></canvas>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="typeChart"></canvas>
+                </div>
             </div>
         </div>
 

@@ -33,7 +33,7 @@
 </head>
 <body class="h-full bg-slate-900">
     <div class="flex h-full">
-        <?php include __DIR__ . '/../layouts/sidebar.php'; ?>
+        <?php $currentPage = 'reports'; include __DIR__ . '/../layouts/admin_sidebar.php'; ?>
         
         <div class="flex-1 overflow-y-auto">
             <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-10">
@@ -78,11 +78,15 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                         <h3 class="text-lg font-semibold text-white mb-4">Headcount by Department</h3>
-                        <canvas id="departmentChart"></canvas>
+                        <div class="relative" style="height: 300px;">
+                            <canvas id="departmentChart"></canvas>
+                        </div>
                     </div>
                     <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                         <h3 class="text-lg font-semibold text-white mb-4">Employment Status</h3>
-                        <canvas id="statusChart"></canvas>
+                        <div class="relative" style="height: 300px;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
